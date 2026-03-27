@@ -61,14 +61,7 @@ Don't love these? Say "more" and I'll generate 25 more with a different creative
 
 ```bash
 git clone https://github.com/FireflySentinel/namejam.git ~/.claude/skills/namejam
-mkdir -p ~/.claude/commands
-cat > ~/.claude/commands/namejam.md << 'EOF'
----
-description: Generate available project names with taste — checks GitHub, npm, PyPI, and domain availability
----
-
-Read and follow the instructions in ~/.claude/skills/namejam/SKILL.md
-EOF
+cd ~/.claude/skills/namejam && ./setup
 ```
 
 This gives you `/namejam` everywhere, with automatic update checks.
@@ -78,14 +71,7 @@ This gives you `/namejam` everywhere, with automatic update checks.
 ```bash
 git clone https://github.com/FireflySentinel/namejam.git .claude/skills/namejam
 rm -rf .claude/skills/namejam/.git
-mkdir -p .claude/commands
-cat > .claude/commands/namejam.md << 'EOF'
----
-description: Generate available project names with taste — checks GitHub, npm, PyPI, and domain availability
----
-
-Read and follow the instructions in .claude/skills/namejam/SKILL.md
-EOF
+cd .claude/skills/namejam && ./setup
 ```
 
 Commit `.claude/skills/namejam/` and `.claude/commands/namejam.md` to your repo so the whole team gets `/namejam`.
@@ -97,7 +83,7 @@ git clone https://github.com/FireflySentinel/namejam.git
 cd namejam
 ```
 
-Then use `/namejam` in Claude Code from that directory.
+Then use `/namejam` in Claude Code from that directory (no setup needed).
 
 ## Requirements
 
