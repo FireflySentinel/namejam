@@ -6,6 +6,18 @@ description: Check for namejam updates and upgrade if available
 
 Check if a new version of namejam is available and offer to upgrade.
 
+## Step 0: Print current version
+
+```bash
+_NJ_VER=""
+[ -f "$HOME/.claude/skills/namejam/VERSION" ] && _NJ_VER=$(cat "$HOME/.claude/skills/namejam/VERSION" 2>/dev/null | tr -d '[:space:]')
+[ -z "$_NJ_VER" ] && [ -f ".claude/skills/namejam/VERSION" ] && _NJ_VER=$(cat ".claude/skills/namejam/VERSION" 2>/dev/null | tr -d '[:space:]')
+[ -z "$_NJ_VER" ] && [ -f "VERSION" ] && _NJ_VER=$(cat "VERSION" 2>/dev/null | tr -d '[:space:]')
+echo "namejam v${_NJ_VER:-unknown}"
+```
+
+Print: `Current version: namejam v{version}`
+
 ## Step 1: Run update check
 
 ```bash

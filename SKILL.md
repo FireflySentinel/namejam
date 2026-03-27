@@ -22,6 +22,20 @@ The user should never see a taken name. Filter before surfacing, not after.
 
 ---
 
+## Step 0: Print version
+
+```bash
+_NJ_VER=""
+[ -f "$HOME/.claude/skills/namejam/VERSION" ] && _NJ_VER=$(cat "$HOME/.claude/skills/namejam/VERSION" 2>/dev/null | tr -d '[:space:]')
+[ -z "$_NJ_VER" ] && [ -f ".claude/skills/namejam/VERSION" ] && _NJ_VER=$(cat ".claude/skills/namejam/VERSION" 2>/dev/null | tr -d '[:space:]')
+[ -z "$_NJ_VER" ] && [ -f "VERSION" ] && _NJ_VER=$(cat "VERSION" 2>/dev/null | tr -d '[:space:]')
+echo "namejam v${_NJ_VER:-unknown}"
+```
+
+Print the version to the user: `Running namejam v{version}`
+
+---
+
 ## Step 1: Understand the Project
 
 ### 1a. Read project files
