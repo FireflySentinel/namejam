@@ -107,11 +107,25 @@ Names must NOT all be single dictionary words. Mix these shapes across the 25 ca
 - **Compounds:** Two short words jammed together — callit, tagit, namejam, nametap, getpick, shiplog
 - **Truncations:** Chopped/respelled real words — monkr, flickr, tumblr, brandr, pickr, titlr
 - **Blends:** Parts of two words fused — Vercel (universal+excel), Figma (figure+magma), Twilio (twilight+IO)
-- **Single words:** Real or invented standalone words — Stripe, Notion, Ramp, Zod, Hono
-- **Phonetic inventions:** Made-up words that sound good — zarvo, kulma, prelo, strax
+- **Single words:** Real or invented standalone words — Stripe, Notion, Ramp, Bun, Husky
 
-**Minimum diversity rule:** Of the 25 names, at least 5 must be compounds or blends, at least 3 must be
-truncations, and no more than 10 may be single standalone words. The remaining slots are free.
+**Minimum diversity rule:** Of the 25 names, at least 8 must be compounds or blends, at least 4 must be
+truncations, and no more than 8 may be single standalone words.
+
+### NEVER generate these (negative examples)
+These patterns consistently score poorly. Reject any name that fits these patterns:
+- **Random syllable inventions with no meaning:** zerka, zelka, morfa, preka, dvora, fenka, genzo, pulzo.
+  If you can't explain what the name means or what two words it comes from, don't use it.
+- **Foreign words the user won't recognize:** waktu, ritmo, kurono, vakti, quando, zaman.
+  Exception: words that are widely known in English (e.g., "vite" meaning fast is borderline OK).
+- **Suffix-slapping on a root:** Adding -ka, -ra, -zo, -al, -va to a root is lazy.
+  "arkora", "calzo", "tevex" — these aren't blends, they're a root with noise appended.
+- **"Abstract, fun phonetics":** This is code for "I ran out of ideas." Every name must have
+  a traceable origin — either a real word, a compound of real words, or a recognizable truncation.
+
+**The test:** For every name, you must be able to complete this sentence:
+"[name] comes from [word1] + [word2]" or "[name] is a truncation of [word]" or "[name] means [meaning]."
+If you can't, delete it and generate a replacement.
 
 ### Name generation strategy (DIFFERENT per project type)
 
@@ -129,12 +143,14 @@ a side project.
 **Reference names:** Stripe, Notion, Vercel (blend), Resend (compound), Clerk, Neon, Ramp, Fivetran (blend), Plaid
 
 **Generate in this order:**
-1. **~15 brand-first names:** Polished, premium-sounding. Truncated or respelled real
-   words that evoke the product's value. "Vercel" from universal, "Ramp" from ramp-up.
+1. **~10 brand-first blends/compounds:** Two concepts fused into one word that evokes the
+   product's value. "Vercel" = universal+excel, "Resend" = re+send, "Fivetran" = five+transform.
    Should look good on a landing page hero section.
-2. **~7 international words:** Short words from Romance or Asian languages that sound
-   elegant in English. Must pass the "say it in a meeting" test.
-3. **~3 phonetically premium:** Abstract but sounds expensive/confident. No playfulness.
+2. **~8 truncated/respelled real words:** Chop or respell a meaningful word. "Clerk" from clerical,
+   "Plaid" = the fabric pattern (trust/weaving), "Neon" = the element (bright/new).
+3. **~4 sharp single words:** Real English words repurposed. "Stripe" = a line (payments),
+   "Ramp" = acceleration. Must connect to the product's purpose.
+4. **~3 creative compounds:** Two short words jammed together. Think "Airbnb", "Dropbox", "Mailchimp".
 
 ---
 
@@ -147,13 +163,16 @@ Domain is nice-to-have, not critical — README and GitHub stars matter more.
 **Reference names:** Vite, Bun, Astro, Tauri, Turborepo (compound), Biome, Lefthook (compound), Husky, Slidev (blend), Unplugin (blend)
 
 **Generate in this order:**
-1. **~12 fun semantic blends:** Playful truncations or mashups that hint at purpose.
-   "Vite" = fast in French, "Bun" = bundler that's a bun, "Zod" = zodiac validation.
-   Think "what name would get upvoted on Hacker News?"
-2. **~5 international fun words:** Short, catchy words from any language that sound
-   cool in English. Spread across languages — don't over-index on any single one.
-3. **~8 abstract/creative:** Pure phonetics that sound fun. Short (3-5 chars ideal).
-   Monosyllabic is great here. Think of names you'd alias in your shell.
+1. **~10 semantic compounds/blends:** Two concepts fused or jammed together that hint at purpose.
+   "Turborepo" = turbo+repo, "Slidev" = slide+dev, "Unplugin" = un+plugin, "Lefthook" = left+hook.
+   The name should make someone curious about what it does.
+2. **~8 truncated/respelled words:** Chop or respell a word that connects to the project.
+   "Astro" from astronomy/fast, "Biome" from ecosystem, "Husky" = guard dog (git hooks).
+   Must have a clear semantic connection — not random syllables.
+3. **~4 sharp single words:** Real English words that fit. "Bun" = a bun (bundler), "Vite" (ok
+   this is French but it means "fast" and everyone knows it). Strong, short, purposeful.
+4. **~3 creative respellings:** Drop vowels or swap letters. "flickr", "tumblr", "monkr" style.
+   Only if the base word connects to the project.
 
 ---
 
@@ -166,11 +185,14 @@ purpose, or at least not be surprised when they learn it.
 **Reference names:** Grep, Curl, Ruff, Bat, Httpie (blend), Ripgrep (compound), Tokei (single), Difftastic (blend), Watchexec (compound), Dust
 
 **Generate in this order:**
-1. **~15 function-telegraphing names:** Truncated or abbreviated words that describe
-   the tool's action. "Ruff" = rough/fast Python linter, "Bat" = better cat,
-   "Exa" = examine/ls replacement. Should answer "what does this do?" from the name.
-2. **~5 short action words:** 3-5 char verbs or verb fragments. Punchy, typeable.
-3. **~5 sharp phonetics:** Short, consonant-forward. Should feel fast to type.
+1. **~10 function-telegraphing compounds:** Two short words or abbreviations that describe
+   the tool's action. "Ripgrep" = rip+grep, "Watchexec" = watch+exec, "Difftastic" = diff+fantastic.
+   Should answer "what does this do?" from the name.
+2. **~8 truncated action words:** Chopped verbs or nouns that hint at purpose. "Ruff" = rough/fast,
+   "Bat" = better cat, "Dust" = du+rust. 3-6 chars, punchy, typeable.
+3. **~4 sharp blends:** Fuse two concepts. "Httpie" = HTTP+pie, "Tokei" = Japanese for clock.
+   Must telegraph function.
+4. **~3 creative respellings:** "grepr", "difft", "logr" style. Only if the base word is obvious.
 
 ---
 
@@ -182,11 +204,12 @@ within a small group. No need for global uniqueness or domain availability.
 **Reference names:** Cobra, Phoenix, Atlas, Falcon, Topgun (compound), Redfox (compound), Onyx, Nova, Icepick (compound), Echo
 
 **Generate in this order:**
-1. **~8 meaningful codenames:** Words from nature, mythology, space, or materials
+1. **~10 meaningful codenames:** Words from nature, mythology, space, or materials
    that loosely relate to the project's purpose or personality.
-2. **~5 international short words:** Simple, catchy, easy for a team to remember.
-3. **~12 pure phonetic codenames:** Short, arbitrary, fun to say. Like internal
-   project codenames at Google or Apple.
+2. **~8 compound codenames:** Two short words that form a vivid image. "Topgun", "Redfox",
+   "Icepick", "Starfall", "Ironclad". Like military operation names.
+3. **~4 truncated words:** Chopped versions of meaningful words. Short, punchy.
+4. **~3 respelled words:** Drop vowels or swap letters for a unique twist.
 
 ### Taste guidelines (apply to ALL tiers):
 - **Length 4-8 characters** is ideal. 9-12 is acceptable.
