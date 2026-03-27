@@ -8,6 +8,7 @@ Generate available project names with taste. A Claude Code slash command that re
 - [What it does](#what-it-does)
 - [How it works](#how-it-works)
 - [Install](#install)
+- [Update](#update)
 - [Uninstall](#uninstall)
 - [Requirements](#requirements)
 - [Name quality](#name-quality)
@@ -77,7 +78,7 @@ git clone https://github.com/FireflySentinel/namejam.git ~/.claude/skills/nameja
 cd ~/.claude/skills/namejam && ./setup
 ```
 
-This gives you `/namejam` everywhere, with automatic update checks.
+This gives you `/namejam` and `/namejam-update` everywhere.
 
 ### Option B: Per-project install (vendored)
 
@@ -97,6 +98,23 @@ cd namejam
 ```
 
 Then use `/namejam` in Claude Code from that directory (no setup needed).
+
+## Update
+
+Run `/namejam-update` in Claude Code to check for new versions and upgrade.
+
+Or update manually:
+
+```bash
+# Global install (git)
+cd ~/.claude/skills/namejam && git pull
+
+# Per-project install (vendored)
+cd .claude/skills/namejam
+rm -rf *
+curl -sL https://github.com/FireflySentinel/namejam/archive/main.tar.gz | tar xz --strip-components=1
+./setup
+```
 
 ## Uninstall
 
