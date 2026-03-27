@@ -102,6 +102,17 @@ Apply these constraints strictly:
 - **Stem diversity:** No more than 3 names may share the same root word or prefix.
   E.g., if you already have "namr", "namex", "namtik", stop using "nam-" and move on.
 
+### Name shape diversity (MANDATORY)
+Names must NOT all be single dictionary words. Mix these shapes across the 25 candidates:
+- **Compounds:** Two short words jammed together — callit, tagit, namejam, nametap, getpick, shiplog
+- **Truncations:** Chopped/respelled real words — monkr, flickr, tumblr, brandr, pickr, titlr
+- **Blends:** Parts of two words fused — Vercel (universal+excel), Figma (figure+magma), Twilio (twilight+IO)
+- **Single words:** Real or invented standalone words — Stripe, Notion, Ramp, Zod, Hono
+- **Phonetic inventions:** Made-up words that sound good — zarvo, kulma, prelo, strax
+
+**Minimum diversity rule:** Of the 25 names, at least 5 must be compounds or blends, at least 3 must be
+truncations, and no more than 10 may be single standalone words. The remaining slots are free.
+
 ### Name generation strategy (DIFFERENT per project type)
 
 The user's project type selection **completely changes** the naming style, not just the
@@ -115,7 +126,7 @@ Think pitch deck, investor meeting, domain name on a business card. Every name s
 feel like it could be a $1B company. Avoid anything techy, nerdy, or that sounds like
 a side project.
 
-**Reference names:** Stripe, Notion, Linear, Clerk, Resend, Vercel, Neon, Ramp
+**Reference names:** Stripe, Notion, Vercel (blend), Resend (compound), Clerk, Neon, Ramp, Fivetran (blend), Plaid
 
 **Generate in this order:**
 1. **~15 brand-first names:** Polished, premium-sounding. Truncated or respelled real
@@ -133,7 +144,7 @@ Think GitHub trending page, dev Twitter, conference lightning talks. Names shoul
 fun to say, fun to type, and make people curious. Can be playful, quirky, unexpected.
 Domain is nice-to-have, not critical — README and GitHub stars matter more.
 
-**Reference names:** Vite, Bun, Turso, Deno, Zod, Hono, Astro, Tauri, Pnpm
+**Reference names:** Vite, Bun, Astro, Tauri, Turborepo (compound), Biome, Lefthook (compound), Husky, Slidev (blend), Unplugin (blend)
 
 **Generate in this order:**
 1. **~12 fun semantic blends:** Playful truncations or mashups that hint at purpose.
@@ -152,7 +163,7 @@ Think terminal, man page, dotfile config. Names should telegraph what the tool d
 Ultra-short is ideal (3-6 chars). The name should make someone guess the tool's
 purpose, or at least not be surprised when they learn it.
 
-**Reference names:** Grep, Curl, Ruff, Exa, Bat, Fd, Rg, Jq, Fzf, Httpie
+**Reference names:** Grep, Curl, Ruff, Bat, Httpie (blend), Ripgrep (compound), Tokei (single), Difftastic (blend), Watchexec (compound), Dust
 
 **Generate in this order:**
 1. **~15 function-telegraphing names:** Truncated or abbreviated words that describe
@@ -168,7 +179,7 @@ purpose, or at least not be surprised when they learn it.
 Think project codenames, internal Slack channels, team wikis. Fun, short, memorable
 within a small group. No need for global uniqueness or domain availability.
 
-**Reference names:** Cobra, Phoenix, Atlas, Falcon, Onyx, Nova, Pulse, Echo
+**Reference names:** Cobra, Phoenix, Atlas, Falcon, Topgun (compound), Redfox (compound), Onyx, Nova, Icepick (compound), Echo
 
 **Generate in this order:**
 1. **~8 meaningful codenames:** Words from nature, mythology, space, or materials
