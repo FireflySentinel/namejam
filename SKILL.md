@@ -417,11 +417,11 @@ for name in NAME1 ... NAME25; do
 done
 ```
 
-### 3c. GitHub namespace crowding (NOT run in this step)
+### 3c. GitHub namespace crowding
 
-GitHub crowding is **not checked automatically**. It is offered as an option in Step 4
-("check it deeper") because it requires `GITHUB_TOKEN` and is slower. See Step 4 for
-the interactive flow.
+GitHub crowding is checked in the **Finals Deep-Dive** (Step 7), not here. It requires
+`GITHUB_TOKEN` to be set and is reserved for the final 2-3 candidates the user is
+most serious about.
 
 ---
 
@@ -478,37 +478,13 @@ options:
     description: "Pick 2-3 names you like — I'll generate variations and run a deep check"
   - label: "More names"
     description: "Generate 25 more with a different creative direction"
-  - label: "Check GitHub crowding"
-    description: "See how many repos already use these names (requires GITHUB_TOKEN)"
   - label: "I'm done"
     description: "Use one of the names above"
 multiSelect: false
 ```
 
 The user can also type their own direction via "Other" (e.g., "more names but shorter",
-"try Japanese-inspired names", or "check namae deeper").
-
-### If user picks "Check GitHub crowding"
-
-First verify `GITHUB_TOKEN` is set. If not, tell the user:
-"GitHub crowding check requires a `GITHUB_TOKEN` env var. Set it and try again,
-or pick a different option."
-
-If set, check all **available** names from the results (not taken ones):
-
-```bash
-for name in AVAILABLE_NAME1 AVAILABLE_NAME2 ...; do
-  count=$(curl -s -H "Accept: application/vnd.github.v3+json" \
-    -H "Authorization: token $GITHUB_TOKEN" \
-    --max-time 3 \
-    "https://api.github.com/search/repositories?q=${name}+in:name&per_page=1" 2>/dev/null \
-    | grep -o '"total_count":[0-9]*' | grep -o '[0-9]*')
-  echo "$name github ${count:-error}"
-done
-```
-
-Interpret: 0 = unique namespace, 1-5 = low crowding, 6-50 = moderate, 50+ = crowded.
-Re-display the available names with GitHub data added, then ask "What's next?" again.
+"try Japanese-inspired names", etc.).
 
 ---
 
@@ -633,22 +609,34 @@ for name in FINALIST1 FINALIST2 FINALIST3; do
 done
 ```
 
-### 7c. GitHub crowding check (if GITHUB_TOKEN is set)
+### 7c. GitHub crowding check
+
+Check if `GITHUB_TOKEN` is set:
 
 ```bash
-if [ -n "$GITHUB_TOKEN" ]; then
-  for name in FINALIST1 FINALIST2 FINALIST3; do
-    count=$(curl -s -H "Accept: application/vnd.github.v3+json" \
-      -H "Authorization: token $GITHUB_TOKEN" \
-      --max-time 3 \
-      "https://api.github.com/search/repositories?q=${name}+in:name&per_page=1" 2>/dev/null \
-      | grep -o '"total_count":[0-9]*' | grep -o '[0-9]*')
-    echo "$name github ${count:-error}"
-  done
-else
-  echo "GITHUB_TOKEN not set — skipping GitHub check"
-fi
+[ -n "$GITHUB_TOKEN" ] && echo "GITHUB_TOKEN set" || echo "GITHUB_TOKEN not set"
 ```
+
+**If not set:** Tell the user:
+"GitHub crowding check requires a `GITHUB_TOKEN` env var. Set it with `export GITHUB_TOKEN=ghp_...`
+and run `/namejam` again to include GitHub data in the finals. Skipping for now."
+
+Show "n/a" in the GitHub column of the comparison table.
+
+**If set:** Check each finalist:
+
+```bash
+for name in FINALIST1 FINALIST2 FINALIST3; do
+  count=$(curl -s -H "Accept: application/vnd.github.v3+json" \
+    -H "Authorization: token $GITHUB_TOKEN" \
+    --max-time 3 \
+    "https://api.github.com/search/repositories?q=${name}+in:name&per_page=1" 2>/dev/null \
+    | grep -o '"total_count":[0-9]*' | grep -o '[0-9]*')
+  echo "$name github ${count:-error}"
+done
+```
+
+Interpret: 0 = unique namespace, 1-5 = low crowding, 6-50 = moderate, 50+ = crowded.
 
 ### 7d. Present comparison table
 
