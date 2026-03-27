@@ -87,7 +87,39 @@ multiSelect: false
 
 The user can pick one of the four options or type their own description via "Other".
 
+**STOP here and wait for the user's answer before continuing.**
+
+### 1c. Ask the user about naming style
+
+After the project type is selected, ask about naming style using `AskUserQuestion`:
+
+```
+question: "What naming style do you prefer?"
+header: "Name style"
+options:
+  - label: "Single word (Recommended)"
+    description: "stripe, notion, vite, astro — clean, brandable, one token"
+  - label: "Hyphenated"
+    description: "left-hook, name-snap, tag-pick — two words joined by a dash"
+  - label: "Mix of both"
+    description: "Generate both styles and let me compare"
+multiSelect: false
+```
+
 **STOP here and wait for the user's answer before generating names.**
+
+If the user picks **"Hyphenated"**:
+- Allow hyphens in generated names (override the "alphanumeric only" hard constraint for this session)
+- Generate names as two short words joined by a hyphen: `word-word`
+- Examples: left-hook, name-snap, tag-pick, code-mint, get-named, ship-tag
+- Each word should be 2-5 characters. Total length (including hyphen) should be 5-12 characters.
+- The hard constraint "No hyphens" is SUSPENDED for this session.
+
+If the user picks **"Mix of both"**:
+- Generate ~15 single-word names and ~10 hyphenated names in each batch of 25.
+
+If the user picks **"Single word"**:
+- Keep the default behavior (alphanumeric only, no hyphens).
 
 The project type shapes the naming strategy:
 
