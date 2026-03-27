@@ -8,6 +8,7 @@ Generate available project names with taste. A Claude Code slash command that re
 - [What it does](#what-it-does)
 - [How it works](#how-it-works)
 - [Install](#install)
+- [Uninstall](#uninstall)
 - [Requirements](#requirements)
 - [Name quality](#name-quality)
 - [Checked registries](#checked-registries)
@@ -96,6 +97,16 @@ cd namejam
 ```
 
 Then use `/namejam` in Claude Code from that directory (no setup needed).
+
+## Uninstall
+
+```bash
+# Global install
+rm -rf ~/.claude/skills/namejam ~/.claude/commands/namejam.md ~/.namejam
+
+# Per-project install
+rm -rf .claude/skills/namejam .claude/commands/namejam.md
+```
 
 ## Requirements
 
