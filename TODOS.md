@@ -9,3 +9,13 @@
 **Effort:** XS (human: ~15min / CC: ~5min)
 **Priority:** P2
 **Depends on:** v1 shipping first
+
+## v0.3.0: Benchmark Regression Test
+**What:** Make the v0.2.0 benchmark harness reusable as a regression test for SKILL.md changes.
+**Why:** Every prompt change risks quality regression. A one-command benchmark run catches it before shipping.
+**Pros:** Prevents quality regressions. Builds confidence for faster prompt iteration.
+**Cons:** Needs maintenance as scoring rubric evolves. LLM-as-judge costs tokens per run.
+**Context:** The benchmark harness is built for v0.2.0. Making it reusable is ~5 min of cleanup (parameterize the before/after comparison, add a "pass/fail" exit code).
+**Effort:** XS (human: ~15min / CC: ~5min)
+**Priority:** P2
+**Depends on:** v0.2.0 benchmark harness existing

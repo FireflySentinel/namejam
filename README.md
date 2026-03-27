@@ -50,40 +50,54 @@ Don't love these? Say "more" and I'll generate 25 more with a different creative
 1. Reads your project context (README, package.json, pyproject.toml, etc.)
 2. Asks what kind of project this is — startup, open source, dev tool, or internal (different naming strategies)
 3. Generates 25 candidate names prioritizing meaningful names over random syllables
-4. Checks the top 10 against npm/PyPI/crates.io (if relevant) and .com domains via DNS
+4. Checks all 25 against npm/PyPI/crates.io (if relevant) and .com domains via DNS
 5. Optionally checks GitHub namespace crowding (requires `GITHUB_TOKEN`)
 6. Shows up to 5 available names + close-but-taken alternatives
 7. Say "more" to generate 25 more with a different creative direction
 
 ## Install
 
-### Option A: Copy the slash command (quickest)
-
-Copy `SKILL.md` to your project:
+### Option A: Global install (recommended — works in any project)
 
 ```bash
-mkdir -p .claude/commands
-# Download SKILL.md and create a pointer
-curl -sL https://raw.githubusercontent.com/YOUR_USERNAME/name-my-repo/main/SKILL.md > SKILL.md
-echo "Read and follow the instructions in SKILL.md at the root of this repository." > .claude/commands/namejam.md
+git clone https://github.com/FireflySentinel/namejam.git ~/.claude/skills/namejam
+mkdir -p ~/.claude/commands
+cat > ~/.claude/commands/namejam.md << 'EOF'
+---
+description: Generate available project names with taste — checks GitHub, npm, PyPI, and domain availability
+---
+
+Read and follow the instructions in ~/.claude/skills/namejam/SKILL.md
+EOF
 ```
 
-### Option B: Clone the repo
+This gives you `/namejam` everywhere, with automatic update checks.
+
+### Option B: Per-project install (vendored)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/name-my-repo.git
-cd name-my-repo
+git clone https://github.com/FireflySentinel/namejam.git .claude/skills/namejam
+rm -rf .claude/skills/namejam/.git
+mkdir -p .claude/commands
+cat > .claude/commands/namejam.md << 'EOF'
+---
+description: Generate available project names with taste — checks GitHub, npm, PyPI, and domain availability
+---
+
+Read and follow the instructions in .claude/skills/namejam/SKILL.md
+EOF
+```
+
+Commit `.claude/skills/namejam/` and `.claude/commands/namejam.md` to your repo so the whole team gets `/namejam`.
+
+### Option C: Clone and run directly
+
+```bash
+git clone https://github.com/FireflySentinel/namejam.git
+cd namejam
 ```
 
 Then use `/namejam` in Claude Code from that directory.
-
-### Option C: Global install (works in any project)
-
-```bash
-mkdir -p ~/.claude/commands
-curl -sL https://raw.githubusercontent.com/YOUR_USERNAME/name-my-repo/main/SKILL.md > ~/.claude/SKILL-name.md
-echo "Read and follow the instructions in ~/.claude/SKILL-name.md" > ~/.claude/commands/namejam.md
-```
 
 ## Requirements
 

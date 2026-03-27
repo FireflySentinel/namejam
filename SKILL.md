@@ -22,6 +22,111 @@ The user should never see a taken name. Filter before surfacing, not after.
 
 ---
 
+## Preamble (run first)
+
+```bash
+_NJ_DIR=""
+[ -f "$HOME/.claude/skills/namejam/bin/namejam-update-check" ] && _NJ_DIR="$HOME/.claude/skills/namejam"
+[ -z "$_NJ_DIR" ] && [ -f ".claude/skills/namejam/bin/namejam-update-check" ] && _NJ_DIR=".claude/skills/namejam"
+if [ -n "$_NJ_DIR" ]; then
+  _UPD=$("$_NJ_DIR/bin/namejam-update-check" 2>/dev/null || true)
+  [ -n "$_UPD" ] && echo "$_UPD" || true
+else
+  # Fallback: try to find it relative to SKILL.md location
+  _NJ_SKILL_DIR="$(cd "$(dirname "$(find . -maxdepth 1 -name SKILL.md -print -quit 2>/dev/null)")" 2>/dev/null && pwd)"
+  if [ -x "$_NJ_SKILL_DIR/bin/namejam-update-check" ]; then
+    _UPD=$("$_NJ_SKILL_DIR/bin/namejam-update-check" 2>/dev/null || true)
+    [ -n "$_UPD" ] && echo "$_UPD" || true
+  fi
+fi
+```
+
+### Handle update check output
+
+If output shows `UPGRADE_AVAILABLE <old> <new>`:
+
+Use `AskUserQuestion` to ask the user:
+- Question: "namejam **v{new}** is available (you're on v{old}). Upgrade now?"
+- Options:
+  - "Yes, upgrade now"
+  - "Not now"
+  - "Never ask again"
+
+**If "Yes, upgrade now":** Detect install type and upgrade:
+
+```bash
+# Detect install location
+INSTALL_DIR=""
+if [ -d "$HOME/.claude/skills/namejam/.git" ]; then
+  INSTALL_DIR="$HOME/.claude/skills/namejam"
+  INSTALL_TYPE="git"
+elif [ -d ".claude/skills/namejam/.git" ]; then
+  INSTALL_DIR=".claude/skills/namejam"
+  INSTALL_TYPE="git"
+elif [ -d "$HOME/.claude/skills/namejam" ]; then
+  INSTALL_DIR="$HOME/.claude/skills/namejam"
+  INSTALL_TYPE="vendored"
+elif [ -d ".claude/skills/namejam" ]; then
+  INSTALL_DIR=".claude/skills/namejam"
+  INSTALL_TYPE="vendored"
+fi
+echo "INSTALL_TYPE=$INSTALL_TYPE INSTALL_DIR=$INSTALL_DIR"
+```
+
+For **git installs**:
+```bash
+cd "$INSTALL_DIR" && git fetch origin && git reset --hard origin/main
+```
+
+For **vendored installs**:
+```bash
+TMP_DIR=$(mktemp -d)
+git clone --depth 1 https://github.com/FireflySentinel/namejam.git "$TMP_DIR/namejam"
+mv "$INSTALL_DIR" "$INSTALL_DIR.bak"
+mv "$TMP_DIR/namejam" "$INSTALL_DIR"
+rm -rf "$INSTALL_DIR.bak" "$TMP_DIR"
+```
+
+After upgrading, clear cache and tell the user "Upgraded to v{new}!", then continue with the skill.
+
+```bash
+rm -f ~/.namejam/last-update-check
+rm -f ~/.namejam/update-snoozed
+```
+
+**If "Not now":** Write snooze state with escalating backoff, then continue with the skill.
+
+```bash
+_SNOOZE_FILE=~/.namejam/update-snoozed
+_REMOTE_VER="{new}"
+_CUR_LEVEL=0
+if [ -f "$_SNOOZE_FILE" ]; then
+  _SNOOZED_VER=$(awk '{print $1}' "$_SNOOZE_FILE")
+  if [ "$_SNOOZED_VER" = "$_REMOTE_VER" ]; then
+    _CUR_LEVEL=$(awk '{print $2}' "$_SNOOZE_FILE")
+    case "$_CUR_LEVEL" in *[!0-9]*) _CUR_LEVEL=0 ;; esac
+  fi
+fi
+_NEW_LEVEL=$((_CUR_LEVEL + 1))
+[ "$_NEW_LEVEL" -gt 3 ] && _NEW_LEVEL=3
+mkdir -p ~/.namejam
+echo "$_REMOTE_VER $_NEW_LEVEL $(date +%s)" > "$_SNOOZE_FILE"
+```
+
+Tell user the snooze duration: "Next reminder in 24h" (or 48h or 1 week, depending on level).
+
+**If "Never ask again":**
+```bash
+mkdir -p ~/.namejam
+touch ~/.namejam/update-check-disabled
+```
+Tell user: "Update checks disabled. Delete `~/.namejam/update-check-disabled` to re-enable."
+Continue with the skill.
+
+If preamble output is empty (up to date or check skipped), proceed directly to Step 1.
+
+---
+
 ## Step 1: Understand the Project
 
 ### 1a. Read project files
@@ -206,8 +311,23 @@ After generating, **deduplicate** the list (case-insensitive).
 
 ## Step 3: Check Availability (all 25 candidates)
 
-Check all 25 generated names. DNS is fast (~100ms per name) and most short names have
-taken .com domains, so checking only a subset wastes good candidates.
+Before running any checks, ask the user using `AskUserQuestion`:
+
+```
+question: "Want me to check name availability online? (DNS, npm, PyPI, etc.)"
+header: "Availability"
+options:
+  - label: "Yes, check availability (Recommended)"
+    description: "Takes ~10 seconds. Checks .com domains and relevant package registries."
+  - label: "Skip checks"
+    description: "Just show me the names — I'll check availability myself."
+multiSelect: false
+```
+
+**If "Skip checks":** Go directly to Step 4 and present all 25 names without availability
+data. Mark all names as "Unchecked" and note that no registries were queried.
+
+**If "Yes, check availability":** Proceed with the checks below.
 
 ### 3a. Domain availability (DNS signal — always run first)
 
@@ -227,7 +347,27 @@ done
 
 ### 3b. Package registry checks (conditional)
 
-Only run if the relevant manifest file was detected in Step 1a:
+Only run if the relevant manifest file was detected in Step 1a. If no manifest files
+were detected, skip this step entirely (nothing to check).
+
+If registries were detected, ask the user using `AskUserQuestion`:
+
+```
+question: "Also check package registry availability? (detected: {list detected registries})"
+header: "Registries"
+options:
+  - label: "Yes, check registries (Recommended)"
+    description: "Queries {detected registries} for each name. Takes ~10 seconds."
+  - label: "Skip registry checks"
+    description: "Only use the DNS results above."
+multiSelect: false
+```
+
+**If "Skip registry checks":** Skip to Step 3c.
+
+**If "Yes, check registries":** Run the checks below.
+
+Registries to check:
 - **npm** (if `package.json` exists) — query `registry.npmjs.org/{name}`, 404 = available
 - **PyPI** (if `pyproject.toml`/`setup.py` exists) — query `pypi.org/pypi/{name}/json`, 404 = available
 - **crates.io** (if `Cargo.toml` exists) — query `crates.io/api/v1/crates/{name}`, 404 = available
