@@ -102,10 +102,10 @@ Then use `/namejam` in Claude Code from that directory (no setup needed).
 
 ```bash
 # Global install
-rm -rf ~/.claude/skills/namejam ~/.claude/commands/namejam.md ~/.namejam
+rm -rf ~/.claude/skills/namejam ~/.claude/commands/namejam.md ~/.claude/commands/namejam-update.md ~/.namejam
 
 # Per-project install
-rm -rf .claude/skills/namejam .claude/commands/namejam.md
+rm -rf .claude/skills/namejam .claude/commands/namejam.md .claude/commands/namejam-update.md
 ```
 
 ## Requirements

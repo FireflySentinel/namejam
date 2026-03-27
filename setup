@@ -42,9 +42,14 @@ EOF
 
 echo "Created $COMMANDS_DIR/namejam.md"
 
+# ─── Copy the update command ──────────────────────────────────
+cp "$SCRIPT_DIR/.claude/commands/namejam-update.md" "$COMMANDS_DIR/namejam-update.md"
+echo "Created $COMMANDS_DIR/namejam-update.md"
+
 # ─── Create state directory ──────────────────────────────────
 mkdir -p "$HOME/.namejam"
 
 echo ""
-echo "Done! /namejam is now available in Claude Code."
-echo "Run /namejam in any project to generate names."
+echo "Done! Two commands are now available in Claude Code:"
+echo "  /namejam        — generate project names"
+echo "  /namejam-update — check for updates"
