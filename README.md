@@ -2,6 +2,18 @@
 
 Generate available project names with taste. A Claude Code slash command that reads your project, generates short memorable names (think Stripe, Linear, Notion), checks availability across GitHub, npm, PyPI, and domains, and shows only names you can actually use.
 
+## Table of contents
+
+- [The problem](#the-problem)
+- [What it does](#what-it-does)
+- [How it works](#how-it-works)
+- [Install](#install)
+- [Requirements](#requirements)
+- [Name quality](#name-quality)
+- [Checked registries](#checked-registries)
+- [Future plans](#future-plans)
+- [License](#license)
+
 ## The problem
 
 AI suggests names that are already taken everywhere. Manually checking GitHub, npm, PyPI, and domains is tedious. Existing generators produce generic "adjective-noun" garbage. No tool combines good name generation with availability checking in your terminal.
