@@ -91,35 +91,96 @@ The user can pick one of the four options or type their own description via "Oth
 
 ### 1c. Ask the user about naming style
 
-After the project type is selected, ask about naming style using `AskUserQuestion`:
+After the project type is selected, present naming style options **tailored to the project type**.
+The available styles differ per type because some styles are natural for certain contexts
+and awkward for others. Use `AskUserQuestion`:
 
+**If Startup / product:**
 ```
 question: "What naming style do you prefer?"
 header: "Name style"
 options:
   - label: "Single word (Recommended)"
-    description: "stripe, notion, vite, astro — clean, brandable, one token"
-  - label: "Hyphenated"
-    description: "left-hook, name-snap, tag-pick — two words joined by a dash"
+    description: "stripe, notion, vercel, ramp — clean, brandable, domain-friendly"
+  - label: "Compound"
+    description: "airbnb, dropbox, mailchimp, fivetran — two words fused into one"
   - label: "Mix of both"
     description: "Generate both styles and let me compare"
 multiSelect: false
 ```
 
+**If Open source project:**
+```
+question: "What naming style do you prefer?"
+header: "Name style"
+options:
+  - label: "Single word (Recommended)"
+    description: "vite, bun, astro, biome — clean, memorable, easy to type"
+  - label: "Hyphenated"
+    description: "left-hook, fast-check, vue-router — two words with a dash"
+  - label: "Compound"
+    description: "turborepo, ripgrep, slidev, unplugin — two words fused into one"
+  - label: "Mix of all"
+    description: "Generate all styles and let me compare"
+multiSelect: false
+```
+
+**If Dev tool / library:**
+```
+question: "What naming style do you prefer?"
+header: "Name style"
+options:
+  - label: "Single word (Recommended)"
+    description: "grep, curl, ruff, bat, dust — ultra-short, typeable"
+  - label: "Hyphenated"
+    description: "fast-glob, ts-node, dry-run — functional, descriptive"
+  - label: "Compound"
+    description: "ripgrep, watchexec, difftastic — two words fused"
+  - label: "Prefix pattern"
+    description: "go-fiber, re-send, un-plugin — prefix signals ecosystem or function"
+multiSelect: false
+```
+
+**If Internal / personal:**
+```
+question: "What naming style do you prefer?"
+header: "Name style"
+options:
+  - label: "Single word (Recommended)"
+    description: "cobra, phoenix, atlas, onyx — codename feel"
+  - label: "Compound"
+    description: "topgun, redfox, icepick, ironclad — vivid two-word codenames"
+  - label: "snake_case"
+    description: "red_fox, ice_pick, star_fall — internal tool / script style"
+  - label: "Mix of all"
+    description: "Generate all styles and let me compare"
+multiSelect: false
+```
+
 **STOP here and wait for the user's answer before generating names.**
 
-If the user picks **"Hyphenated"**:
-- Allow hyphens in generated names (override the "alphanumeric only" hard constraint for this session)
-- Generate names as two short words joined by a hyphen: `word-word`
-- Examples: left-hook, name-snap, tag-pick, code-mint, get-named, ship-tag
-- Each word should be 2-5 characters. Total length (including hyphen) should be 5-12 characters.
-- The hard constraint "No hyphens" is SUSPENDED for this session.
+### How each style affects generation:
 
-If the user picks **"Mix of both"**:
-- Generate ~15 single-word names and ~10 hyphenated names in each batch of 25.
+**Single word:** Default behavior. Alphanumeric only, no separators.
 
-If the user picks **"Single word"**:
-- Keep the default behavior (alphanumeric only, no hyphens).
+**Compound:** Two words fused into one without separator. "turborepo", "ripgrep", "airbnb".
+Each component should be 2-5 characters. Total 5-12 characters. The hard constraint
+"alphanumeric only" remains in effect.
+
+**Hyphenated:** Two words joined by a hyphen. "left-hook", "fast-check", "vue-router".
+Each word should be 2-6 characters. Total (including hyphen) 5-13 characters.
+The hard constraint "No hyphens" is SUSPENDED for this session.
+
+**Prefix pattern:** A short prefix (2-4 chars) + hyphen + descriptive word.
+Common prefixes: go-, re-, un-, pre-, no-, js-, py-, ts-.
+"go-fiber", "re-send", "un-plugin", "no-cache".
+The hard constraint "No hyphens" is SUSPENDED for this session.
+
+**snake_case:** Two words joined by underscore. "red_fox", "ice_pick", "star_fall".
+The hard constraint "alphanumeric only" is SUSPENDED to allow underscores.
+
+**Mix:** Generate a proportional mix of the styles offered for that project type.
+Roughly equal split across all available styles for the type.
 
 The project type shapes the naming strategy:
 
@@ -143,6 +204,7 @@ Apply these constraints strictly:
 - Maximum 12 characters
 - Minimum 3 characters
 - Alphanumeric characters only (lowercase). No hyphens, underscores, or special characters.
+  *(This constraint may be suspended by the user's naming style choice in Step 1c.)*
 - No names ending in: -ify, -ly, -hub, -base, -io, -app
 - No names starting with: i (iSomething), e- (eSomething), my (mySomething)
 - **Stem diversity:** No more than 3 names may share the same root word or prefix.
