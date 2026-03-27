@@ -474,6 +474,8 @@ Use `AskUserQuestion` to let the user choose a direction:
 question: "What would you like to do next?"
 header: "Next step"
 options:
+  - label: "Shortlist favorites"
+    description: "Pick 2-3 names you like — I'll generate variations and run a deep check"
   - label: "More names"
     description: "Generate 25 more with a different creative direction"
   - label: "Check GitHub crowding"
@@ -521,6 +523,153 @@ Re-display the available names with GitHub data added, then ask "What's next?" a
    After the 3rd expansion, tell the user:
    "That's 100 names checked. If none of these work, try describing your project
    differently and I'll start fresh."
+
+---
+
+## Step 6: Variant Round (when the user picks "Shortlist favorites")
+
+The user liked 2-3 names but isn't fully committed. Generate variations to help them find
+the perfect version.
+
+### 6a. Collect favorites
+
+Use `AskUserQuestion`:
+```
+question: "Which names do you like? I'll generate variations of each. (Type the names, separated by commas)"
+header: "Favorites"
+options:
+  - label: "Top 2 from the list"
+    description: "I'll use the first 2 available names shown above"
+  - label: "Top 3 from the list"
+    description: "I'll use the first 3 available names shown above"
+multiSelect: false
+```
+
+The user can also type specific names via "Other".
+
+### 6b. Generate variations
+
+For each favorited name, generate **5 variations** using these techniques:
+- **Shorter version:** Truncate or abbreviate (e.g., "mintname" → "mintn", "namejam" → "namjm")
+- **Longer version:** Extend with a meaningful suffix or prefix (e.g., "callit" → "callitout", "pluck" → "pluckr")
+- **Respelling:** Drop vowels or swap letters (e.g., "namecast" → "namcast", "coinword" → "coynwrd")
+- **Reorder:** Swap the two components (e.g., "mint-name" → "name-mint", "call-it" → "it-call")
+- **Synonym swap:** Replace one component with a synonym (e.g., "mint-name" → "mint-tag", "call-it" → "dub-it")
+
+Maintain the user's chosen naming style (single word, hyphenated, compound, etc.) from Step 1c.
+
+Apply the same origin test: every variant must have a traceable origin.
+
+### 6c. Check and present variations
+
+Check availability (DNS + any registries detected in Step 1a) for all variations.
+Present in this format:
+
+```
+## Variations of "callit"
+
+  ✓ callitout   — callit extended — domain: callitout.com appears free
+  ✓ dubit       — synonym swap (dub + it) — domain: dubit.com likely taken
+  ✗ calit       — truncation — taken on npm
+  ...
+
+## Variations of "mintname"
+
+  ✓ nametag     — synonym swap — domain: nametag.com likely taken
+  ...
+```
+
+### 6d. Ask what's next
+
+After presenting variations, use `AskUserQuestion`:
+```
+question: "Found some variations. What next?"
+header: "Next step"
+options:
+  - label: "Finals deep-dive"
+    description: "Pick your top 2-3 finalists — I'll check .ai, .io, .dev, .net and GitHub"
+  - label: "More variations"
+    description: "Pick different favorites to explore"
+  - label: "I'm done"
+    description: "I've found my name"
+multiSelect: false
+```
+
+---
+
+## Step 7: Finals Deep-Dive (when the user picks "Finals deep-dive")
+
+The user has narrowed down to 2-3 finalists. Run a comprehensive check to help them make
+the final decision.
+
+### 7a. Collect finalists
+
+Use `AskUserQuestion`:
+```
+question: "Which names are your finalists? (Type 2-3 names, separated by commas)"
+header: "Finalists"
+options:
+  - label: "Top 2 available"
+    description: "I'll use the first 2 available names from the last round"
+  - label: "Top 3 available"
+    description: "I'll use the first 3 available names from the last round"
+multiSelect: false
+```
+
+The user can also type specific names via "Other".
+
+### 7b. Multi-TLD domain check
+
+For each finalist, check .com, .ai, .io, .dev, and .net:
+
+```bash
+for name in FINALIST1 FINALIST2 FINALIST3; do
+  # Strip hyphens/underscores for domain check
+  domain=$(echo "$name" | tr -d '-_')
+  for tld in com ai io dev net; do
+    result=$(dig +short "${domain}.${tld}" 2>/dev/null | head -1)
+    if [ -z "$result" ]; then echo "$name .${tld} available"; else echo "$name .${tld} taken"; fi
+  done
+done
+```
+
+### 7c. GitHub crowding check (if GITHUB_TOKEN is set)
+
+```bash
+if [ -n "$GITHUB_TOKEN" ]; then
+  for name in FINALIST1 FINALIST2 FINALIST3; do
+    count=$(curl -s -H "Accept: application/vnd.github.v3+json" \
+      -H "Authorization: token $GITHUB_TOKEN" \
+      --max-time 3 \
+      "https://api.github.com/search/repositories?q=${name}+in:name&per_page=1" 2>/dev/null \
+      | grep -o '"total_count":[0-9]*' | grep -o '[0-9]*')
+    echo "$name github ${count:-error}"
+  done
+else
+  echo "GITHUB_TOKEN not set — skipping GitHub check"
+fi
+```
+
+### 7d. Present comparison table
+
+```
+## Finals: Deep-Dive Comparison
+
+  Name        .com    .ai     .io     .dev    .net    GitHub    Registry
+  ──────────  ──────  ──────  ──────  ──────  ──────  ────────  ────────
+  callit      free    free    taken   free    taken   3 repos   npm: free
+  mintname    free    taken   taken   free    free    0 repos   npm: free
+  namecast    free    free    free    taken   taken   12 repos  npm: free
+
+  Legend: free = no DNS record | taken = DNS resolves | N repos = GitHub search results
+```
+
+After the table, give a brief recommendation:
+- Which name has the best overall availability?
+- Which has the cleanest GitHub namespace?
+- Note any concerns (e.g., "namecast has 12 GitHub repos, might cause confusion").
+
+Then tell the user: "Verify your final choice on the actual registrar before creating the repo."
 
 ---
 
