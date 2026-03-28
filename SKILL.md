@@ -429,11 +429,29 @@ most serious about.
 
 ### Filter and rank
 
-From the checked names, categorize:
-- **Available:** Not taken on any checked package registry. If GitHub was checked, low crowding (0-5 repos).
+Filtering rules depend on the project type selected in Step 1b:
+
+**If Startup / product:**
+Domain is a primary signal. A taken .com domain counts against the name.
+- **Available:** Not taken on any checked package registry AND .com domain appears free.
+- **Likely available:** Not taken on registries but .com domain is taken, or GitHub crowding is moderate (6-50).
+- **Taken:** Taken on at least one package registry, OR 50+ GitHub repos.
+- **Inconclusive:** Could not verify one or more registries.
+
+**If Open source project or Dev tool / library:**
+Registry availability is what matters. Domain is informational only — never disqualify a name for having a taken domain.
+- **Available:** Not taken on any checked package registry (npm/PyPI/crates.io).
 - **Likely available:** Not taken on registries but moderate GitHub crowding (6-50), or GitHub not checked.
 - **Taken:** Taken on at least one package registry, OR 50+ GitHub repos.
 - **Inconclusive:** Could not verify one or more registries.
+Show domain status as a reference column, but do NOT move names to "Close but taken" based on domain alone.
+
+**If Internal / personal:**
+No external availability matters. Show all 25 names as available — no filtering.
+Domain and registry info can be shown as reference if the user opted into checks, but do not categorize any name as "taken".
+**Important:** Even if Step 3 returned "taken" results for some names, IGNORE that data
+for categorization purposes. The Internal type does not use availability to rank or filter.
+Present all 25 names under "Available names" regardless of DNS or registry results.
 
 ### Output format
 
@@ -511,17 +529,11 @@ the perfect version.
 
 Use `AskUserQuestion`:
 ```
-question: "Which names do you like? I'll generate variations of each. (Type the names, separated by commas)"
+question: "Which names do you like? I'll generate variations of each. (Type 2-3 names, separated by commas. You can include names from the list or your own.)"
 header: "Favorites"
-options:
-  - label: "Top 2 from the list"
-    description: "I'll use the first 2 available names shown above"
-  - label: "Top 3 from the list"
-    description: "I'll use the first 3 available names shown above"
-multiSelect: false
 ```
 
-The user can also type specific names via "Other".
+No pre-selected options — the user types their own favorites.
 
 ### 6b. Generate variations
 
@@ -582,17 +594,12 @@ the final decision.
 
 Use `AskUserQuestion`:
 ```
-question: "Which names are your finalists? (Type 2-3 names, separated by commas)"
+question: "Which names are your finalists? (Type 2-3 names, separated by commas. You can include names from previous rounds or entirely new names you thought of.)"
 header: "Finalists"
-options:
-  - label: "Top 2 available"
-    description: "I'll use the first 2 available names from the last round"
-  - label: "Top 3 available"
-    description: "I'll use the first 3 available names from the last round"
-multiSelect: false
 ```
 
-The user can also type specific names via "Other".
+No pre-selected options — the user types their own finalists. They may pick from
+earlier rounds or enter names they came up with themselves.
 
 ### 7b. Multi-TLD domain check
 
