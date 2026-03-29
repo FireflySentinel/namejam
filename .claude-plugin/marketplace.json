@@ -1,0 +1,10 @@
+{
+  "name": "FireflySentinel/namejam",
+  "version": "1.0.0",
+  "plugins": [
+    {
+      "name": "namejam",
+      "source": { "type": "local", "path": "." }
+    }
+  ]
+}
