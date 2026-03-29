@@ -1,1 +1,0 @@
-skills/namejam/SKILL.md

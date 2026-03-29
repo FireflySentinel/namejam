@@ -25,7 +25,7 @@ AI suggests names that are already taken everywhere. Manually checking npm, PyPI
 ```
 > /namejam
 
-Running namejam v0.1.1
+Running namejam v0.2.0
 
 Reading project context...
 
@@ -84,8 +84,6 @@ What would you like to do next?
 
 ## Install
 
-### Option A: Plugin install (recommended)
-
 In Claude Code, run:
 
 ```
@@ -95,35 +93,16 @@ In Claude Code, run:
 
 Done. `/namejam` is now available in every project.
 
-### Option B: Git clone (manual)
-
-```bash
-git clone https://github.com/FireflySentinel/namejam.git ~/.claude/skills/namejam
-cd ~/.claude/skills/namejam && bash setup
-```
-
-This also gives you `/namejam-update` for checking new versions.
-
 ## Update
 
-**Plugin install:** Plugins update through the marketplace. Run `/plugin update namejam` when a new version is available.
-
-**Git install:** Run `/namejam-update` or manually:
-
-```bash
-cd ~/.claude/skills/namejam && git pull
+```
+/plugin update namejam
 ```
 
 ## Uninstall
 
-**Plugin install:**
 ```
 /plugin uninstall namejam
-```
-
-**Git install:**
-```bash
-rm -rf ~/.claude/skills/namejam ~/.claude/commands/namejam.md ~/.claude/commands/namejam-update.md ~/.namejam
 ```
 
 ## Requirements
@@ -144,7 +123,7 @@ If you can't complete that sentence, the name is rejected.
 Generated names follow these constraints:
 
 - 3-12 characters (4-8 ideal), 2-3 syllables
-- Mix of **compounds** (callit, namejam), **truncations** (monkr, flickr), **blends** (Vercel, Figma), and **single words** (Stripe, Ramp)
+- Mix of **compounds** (Dropbox, Lefthook, Tripwire), **truncations** (monkr, flickr), **blends** (Vercel, Figma), and **single words** (Stripe, Ramp)
 - No random syllable inventions (zerka, morfa, preka)
 - No foreign words users won't recognize (waktu, ritmo, kurono)
 - No lazy suffix-slapping (arkora, calzo, tevex)
