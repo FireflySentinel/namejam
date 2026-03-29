@@ -84,59 +84,46 @@ What would you like to do next?
 
 ## Install
 
-### Option A: Global install (recommended — works in any project)
+### Option A: Plugin install (recommended)
+
+In Claude Code, run:
+
+```
+/plugin marketplace add FireflySentinel/namejam
+/plugin install namejam
+```
+
+Done. `/namejam` is now available in every project.
+
+### Option B: Git clone (manual)
 
 ```bash
 git clone https://github.com/FireflySentinel/namejam.git ~/.claude/skills/namejam
 cd ~/.claude/skills/namejam && bash setup
 ```
 
-This gives you `/namejam` and `/namejam-update` everywhere.
-
-### Option B: Per-project install (vendored)
-
-```bash
-git clone https://github.com/FireflySentinel/namejam.git .claude/skills/namejam
-rm -rf .claude/skills/namejam/.git
-cd .claude/skills/namejam && bash setup
-```
-
-Commit `.claude/skills/namejam/` and `.claude/commands/namejam.md` to your repo so the whole team gets `/namejam`.
-
-### Option C: Clone and run directly
-
-```bash
-git clone https://github.com/FireflySentinel/namejam.git
-cd namejam
-```
-
-Then use `/namejam` in Claude Code from that directory (no setup needed).
+This also gives you `/namejam-update` for checking new versions.
 
 ## Update
 
-Run `/namejam-update` in Claude Code to check for new versions and upgrade.
+**Plugin install:** Plugins update through the marketplace. Run `/plugin update namejam` when a new version is available.
 
-Or update manually:
+**Git install:** Run `/namejam-update` or manually:
 
 ```bash
-# Global install (git)
 cd ~/.claude/skills/namejam && git pull
-
-# Per-project install (vendored)
-cd .claude/skills/namejam
-rm -rf *
-curl -sL https://github.com/FireflySentinel/namejam/archive/main.tar.gz | tar xz --strip-components=1
-bash setup
 ```
 
 ## Uninstall
 
-```bash
-# Global install
-rm -rf ~/.claude/skills/namejam ~/.claude/commands/namejam.md ~/.claude/commands/namejam-update.md ~/.namejam
+**Plugin install:**
+```
+/plugin uninstall namejam
+```
 
-# Per-project install
-rm -rf .claude/skills/namejam .claude/commands/namejam.md .claude/commands/namejam-update.md
+**Git install:**
+```bash
+rm -rf ~/.claude/skills/namejam ~/.claude/commands/namejam.md ~/.claude/commands/namejam-update.md ~/.namejam
 ```
 
 ## Requirements
