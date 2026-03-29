@@ -1,10 +1,15 @@
 {
-  "name": "FireflySentinel/namejam",
-  "version": "1.0.0",
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "namejam",
+  "description": "Generate available project names with taste",
+  "owner": {
+    "name": "FireflySentinel"
+  },
   "plugins": [
     {
       "name": "namejam",
-      "source": { "type": "local", "path": "." }
+      "description": "Generate available project names with taste — checks GitHub, npm, PyPI, and domain availability",
+      "source": "."
     }
   ]
 }
