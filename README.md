@@ -88,7 +88,7 @@ What would you like to do next?
 
 ```bash
 git clone https://github.com/FireflySentinel/namejam.git ~/.claude/skills/namejam
-cd ~/.claude/skills/namejam && ./setup
+cd ~/.claude/skills/namejam && bash setup
 ```
 
 This gives you `/namejam` and `/namejam-update` everywhere.
@@ -98,7 +98,7 @@ This gives you `/namejam` and `/namejam-update` everywhere.
 ```bash
 git clone https://github.com/FireflySentinel/namejam.git .claude/skills/namejam
 rm -rf .claude/skills/namejam/.git
-cd .claude/skills/namejam && ./setup
+cd .claude/skills/namejam && bash setup
 ```
 
 Commit `.claude/skills/namejam/` and `.claude/commands/namejam.md` to your repo so the whole team gets `/namejam`.
@@ -126,7 +126,7 @@ cd ~/.claude/skills/namejam && git pull
 cd .claude/skills/namejam
 rm -rf *
 curl -sL https://github.com/FireflySentinel/namejam/archive/main.tar.gz | tar xz --strip-components=1
-./setup
+bash setup
 ```
 
 ## Uninstall

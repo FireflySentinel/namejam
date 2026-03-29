@@ -212,13 +212,42 @@ Apply these constraints strictly:
 
 ### Name shape diversity (MANDATORY)
 Names must NOT all be single dictionary words. Mix these shapes across the 25 candidates:
-- **Compounds:** Two short words jammed together — callit, tagit, namejam, nametap, getpick, shiplog
+- **Compounds:** Two short words jammed together — Dropbox, Turborepo, Lefthook, Tripwire, Lockstep
 - **Truncations:** Chopped/respelled real words — monkr, flickr, tumblr, brandr, pickr, titlr
 - **Blends:** Parts of two words fused — Vercel (universal+excel), Figma (figure+magma), Twilio (twilight+IO)
 - **Single words:** Real or invented standalone words — Stripe, Notion, Ramp, Bun, Husky
 
-**Minimum diversity rule:** Of the 25 names, at least 8 must be compounds or blends, at least 4 must be
-truncations, and no more than 8 may be single standalone words.
+**Minimum diversity rule:** Of the 25 names, at least 10 must be compounds or blends, at least 4 must be
+truncations, and no more than 6 may be single standalone words.
+Single real English words (bolt, forge, slate, prism) score high on taste but are almost always
+taken on npm/PyPI/domains. Compounds and blends are where available names live. Weight accordingly.
+
+### What makes a GOOD compound (vs a bad one)
+
+Good compounds have **wordplay, double meaning, or a vivid image**. Bad compounds are
+**mechanical verb+noun gluing** with no wit.
+
+**GOOD compounds — study these:**
+- **Lefthook** — left+hook. Boxing term (a surprise punch) AND git hooks. Double meaning.
+- **Tripwire** — trip+wire. Security term (an alarm trigger) AND triggered-on-events. Vivid image.
+- **Lockstep** — lock+step. Means "in perfect sync." The compound IS an idiom.
+- **Dropbox** — drop+box. "Drop files in a box." The name IS the action.
+- **Turborepo** — turbo+repo. "Turbo" modifies "repo" — you instantly know it's a fast repo tool.
+- **Airbnb** — air+bnb. "Air bed and breakfast." Compressed a whole concept into 5 letters.
+- **Mailchimp** — mail+chimp. Unexpected animal pairing creates memorability.
+- **Difftastic** — diff+fantastic. Portmanteau with attitude.
+
+**BAD compounds — never do this:**
+- **ripfast** — rip+fast. Two generic "speed" words glued together. No wit, no image.
+- **zapgrep** — zap+grep. Action verb + tool name. Mechanical, forgettable.
+- **lintjet** — lint+jet. Tool function + speed metaphor. Could describe any fast tool.
+- **payvel** — pay+velocity. Truncated second word makes it look like suffix-slapping.
+- **snapbuild** — snap+build. "Fast build." You've described the feature, not named the product.
+- **codesweep** — code+sweep. Generic verb+noun. Sounds like a cleanup script, not a brand.
+
+**The compound test:** A good compound makes you smile, nod, or think "clever." A bad compound
+makes you think "that's just two words stuck together." If the name works as an existing
+English idiom, metaphor, or phrase, it's almost always good.
 
 ### NEVER generate these (negative examples)
 These patterns consistently score poorly. Reject any name that fits these patterns:
@@ -230,10 +259,24 @@ These patterns consistently score poorly. Reject any name that fits these patter
   "arkora", "calzo", "tevex" — these aren't blends, they're a root with noise appended.
 - **"Abstract, fun phonetics":** This is code for "I ran out of ideas." Every name must have
   a traceable origin — either a real word, a compound of real words, or a recognizable truncation.
+- **Mechanical verb+noun compounds:** ripfast, zapgrep, snapbuild, codesweep, lintjet, payvel.
+  Two generic words glued together with no wordplay, double meaning, or vivid image.
+  Good compounds are idioms, metaphors, or puns (tripwire, lockstep, dropbox). See "What makes a GOOD compound" above.
 
 **The test:** For every name, you must be able to complete this sentence:
 "[name] comes from [word1] + [word2]" or "[name] is a truncation of [word]" or "[name] means [meaning]."
 If you can't, delete it and generate a replacement.
+
+### Safety check (MANDATORY)
+Before including any name, check that it does NOT:
+- **Read as or sound like a sexual/profane term** in English or common languages.
+  Watch for accidental readings when two words are fused: "penisland", "therapist" → "the rapist", etc.
+  Read the compound both as intended AND as a single unbroken string. If either reading is problematic, drop it.
+- **Resemble a racial, ethnic, or gender slur** — even phonetically. When in doubt, drop it.
+- **Contain a slang drug or violence reference** that would make the name unprofessional.
+
+If a name passes all other quality checks but fails safety, delete it silently and generate a replacement.
+Do not mention the rejected name to the user.
 
 ### Name generation strategy (DIFFERENT per project type)
 
@@ -250,15 +293,22 @@ a side project.
 
 **Reference names:** Stripe, Notion, Vercel (blend), Resend (compound), Clerk, Neon, Ramp, Fivetran (blend), Plaid
 
+**Remember:** Apply all constraints from the NEVER block and the compound quality guide above. Every name must pass the origin test.
+
 **Generate in this order:**
-1. **~10 brand-first blends/compounds:** Two concepts fused into one word that evokes the
+1. **~12 brand-first blends/compounds:** Two concepts fused into one word that evokes the
    product's value. "Vercel" = universal+excel, "Resend" = re+send, "Fivetran" = five+transform.
    Should look good on a landing page hero section.
+   Aim for **double meanings, idioms, or visual metaphors** — not mechanical verb+noun.
+   Good: "Airbnb" (compressed concept), "Mailchimp" (unexpected pairing), "Plaid" (trust pattern).
+   Bad: "payvel", "cashlux", "fundmint" (generic word + generic word, no wit).
 2. **~8 truncated/respelled real words:** Chop or respell a meaningful word. "Clerk" from clerical,
    "Plaid" = the fabric pattern (trust/weaving), "Neon" = the element (bright/new).
-3. **~4 sharp single words:** Real English words repurposed. "Stripe" = a line (payments),
+3. **~3 sharp single words:** Real English words repurposed. "Stripe" = a line (payments),
    "Ramp" = acceleration. Must connect to the product's purpose.
-4. **~3 creative compounds:** Two short words jammed together. Think "Airbnb", "Dropbox", "Mailchimp".
+   Note: single real words are almost always taken on registries. Include a few for aspiration
+   but don't rely on them.
+4. **~2 creative compounds:** Two short words jammed together. Think "Airbnb", "Dropbox", "Mailchimp".
 
 ---
 
@@ -270,15 +320,20 @@ Domain is nice-to-have, not critical — README and GitHub stars matter more.
 
 **Reference names:** Vite, Bun, Astro, Tauri, Turborepo (compound), Biome, Lefthook (compound), Husky, Slidev (blend), Unplugin (blend)
 
+**Remember:** Apply all constraints from the NEVER block and the compound quality guide above. Every name must pass the origin test.
+
 **Generate in this order:**
-1. **~10 semantic compounds/blends:** Two concepts fused or jammed together that hint at purpose.
+1. **~12 semantic compounds/blends:** Two concepts fused or jammed together that hint at purpose.
    "Turborepo" = turbo+repo, "Slidev" = slide+dev, "Unplugin" = un+plugin, "Lefthook" = left+hook.
    The name should make someone curious about what it does.
-2. **~8 truncated/respelled words:** Chop or respell a word that connects to the project.
+   Aim for **wordplay or double meaning** — "Lefthook" works because it's a boxing term AND git hooks.
+   Bad: "snapbuild", "devburn", "rushpack" (mechanical verb+noun, no double meaning).
+2. **~6 truncated/respelled words:** Chop or respell a word that connects to the project.
    "Astro" from astronomy/fast, "Biome" from ecosystem, "Husky" = guard dog (git hooks).
    Must have a clear semantic connection — not random syllables.
 3. **~4 sharp single words:** Real English words that fit. "Bun" = a bun (bundler), "Vite" (ok
    this is French but it means "fast" and everyone knows it). Strong, short, purposeful.
+   Note: single real words are almost always taken. Include a few but don't rely on them.
 4. **~3 creative respellings:** Drop vowels or swap letters. "flickr", "tumblr", "monkr" style.
    Only if the base word connects to the project.
 
@@ -292,11 +347,15 @@ purpose, or at least not be surprised when they learn it.
 
 **Reference names:** Grep, Curl, Ruff, Bat, Httpie (blend), Ripgrep (compound), Tokei (single), Difftastic (blend), Watchexec (compound), Dust
 
+**Remember:** Apply all constraints from the NEVER block and the compound quality guide above. Every name must pass the origin test.
+
 **Generate in this order:**
-1. **~10 function-telegraphing compounds:** Two short words or abbreviations that describe
+1. **~12 function-telegraphing compounds:** Two short words or abbreviations that describe
    the tool's action. "Ripgrep" = rip+grep, "Watchexec" = watch+exec, "Difftastic" = diff+fantastic.
    Should answer "what does this do?" from the name.
-2. **~8 truncated action words:** Chopped verbs or nouns that hint at purpose. "Ruff" = rough/fast,
+   Best dev tool compounds use a **vivid verb + the domain noun**: ripgrep, watchexec, difftastic.
+   Bad: "zapgrep", "lintjet", "codesweep" (generic verb, no personality).
+2. **~6 truncated action words:** Chopped verbs or nouns that hint at purpose. "Ruff" = rough/fast,
    "Bat" = better cat, "Dust" = du+rust. 3-6 chars, punchy, typeable.
 3. **~4 sharp blends:** Fuse two concepts. "Httpie" = HTTP+pie, "Tokei" = Japanese for clock.
    Must telegraph function.
@@ -311,10 +370,12 @@ within a small group. No need for global uniqueness or domain availability.
 
 **Reference names:** Cobra, Phoenix, Atlas, Falcon, Topgun (compound), Redfox (compound), Onyx, Nova, Icepick (compound), Echo
 
+**Remember:** Apply all constraints from the NEVER block and the compound quality guide above. Every name must pass the origin test.
+
 **Generate in this order:**
-1. **~10 meaningful codenames:** Words from nature, mythology, space, or materials
+1. **~8 meaningful codenames:** Words from nature, mythology, space, or materials
    that loosely relate to the project's purpose or personality.
-2. **~8 compound codenames:** Two short words that form a vivid image. "Topgun", "Redfox",
+2. **~10 compound codenames:** Two short words that form a vivid image. "Topgun", "Redfox",
    "Icepick", "Starfall", "Ironclad". Like military operation names.
 3. **~4 truncated words:** Chopped versions of meaningful words. Short, punchy.
 4. **~3 respelled words:** Drop vowels or swap letters for a unique twist.
@@ -509,8 +570,11 @@ The user can also type their own direction via "Other" (e.g., "more names but sh
 ## Step 5: Expand (when the user picks "More names")
 
 1. Generate **25 more** candidates using the same constraints but a **different creative
-   direction** — if the first pass leaned semantic, try more foreign words and phonetic
-   names, and vice versa. Do NOT repeat any names from previous passes.
+   direction** — if the first pass leaned toward compounds, try more truncations and blends,
+   and vice versa. Try different root words and metaphor domains (e.g., if round 1 used
+   tech metaphors, try nature, music, or craft metaphors). Foreign words are OK only if
+   widely known in English (same threshold as the NEVER block). Do NOT repeat any names
+   from previous passes.
 2. Check all 25 of the new batch (same process as Step 3).
 3. Present results (same format as Step 4), then ask "What would you like to do next?" again.
 4. You may repeat this step up to 3 times (total 100 names across all rounds).

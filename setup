@@ -4,6 +4,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# ─── Ensure executable permissions (skill-installer may strip them) ──
+chmod +x "$SCRIPT_DIR/setup" 2>/dev/null || true
+chmod +x "$SCRIPT_DIR/bin/namejam-update-check" 2>/dev/null || true
+
 # ─── Detect install location ─────────────────────────────────
 # Global: ~/.claude/skills/namejam/
 # Local:  .claude/skills/namejam/ (inside a project repo)
@@ -24,7 +28,7 @@ else
   echo ""
   echo "For global install (works in any project):"
   echo "  git clone https://github.com/FireflySentinel/namejam.git ~/.claude/skills/namejam"
-  echo "  cd ~/.claude/skills/namejam && ./setup"
+  echo "  cd ~/.claude/skills/namejam && bash setup"
   exit 0
 fi
 
