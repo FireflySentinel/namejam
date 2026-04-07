@@ -419,7 +419,30 @@ data. Mark all names as "Unchecked" and note that no registries were queried.
 
 **If "Yes, check availability":** Proceed with the checks below.
 
-### 3a. Domain availability (DNS signal — always run first)
+### 3a. Preflight check (run once before any availability checks)
+
+Before running any DNS or registry checks, verify that required tools exist:
+
+```bash
+command -v dig >/dev/null 2>&1 && echo "dig: ok" || echo "dig: missing"
+command -v curl >/dev/null 2>&1 && echo "curl: ok" || echo "curl: missing"
+```
+
+**If `dig` is missing:** Tell the user:
+"Domain checking requires `dig`. Install it:
+- macOS: already installed
+- Ubuntu/Debian: `sudo apt-get install dnsutils`
+- RHEL/Fedora: `sudo dnf install bind-utils`
+
+Skipping domain checks for now — registry checks will still run."
+
+Mark all domain results as "unchecked" and proceed to Step 3b.
+
+**If `curl` is missing:** Tell the user:
+"Registry checking requires `curl`. Cannot check availability without it."
+Skip all availability checks and go to Step 4 with all names marked "Unchecked".
+
+### 3b. Domain availability (DNS signal — always run first)
 
 For each of the 25 names, check if `{name}.com` has a DNS record via `dig`.
 No record suggests the domain might be free; a record means it's definitely in use.
@@ -435,7 +458,7 @@ for name in NAME1 NAME2 ... NAME25; do
 done
 ```
 
-### 3b. Package registry checks (conditional)
+### 3c. Package registry checks (conditional)
 
 Only run if the relevant manifest file was detected in Step 1a. If no manifest files
 were detected, skip this step entirely (nothing to check).
@@ -453,7 +476,7 @@ options:
 multiSelect: false
 ```
 
-**If "Skip registry checks":** Skip to Step 3c.
+**If "Skip registry checks":** Skip to Step 3d.
 
 **If "Yes, check registries":** Run the checks below.
 
@@ -462,15 +485,32 @@ Registries to check:
 - **PyPI** (if `pyproject.toml`/`setup.py` exists) — query `pypi.org/pypi/{name}/json`, 404 = available
 - **crates.io** (if `Cargo.toml` exists) — query `crates.io/api/v1/crates/{name}`, 404 = available
 
+**IMPORTANT:** Always include a User-Agent header. crates.io returns 403 for all
+requests without one, causing every name to be misclassified.
+
 ```bash
-# npm example (swap URL for PyPI/crates.io as needed)
+UA="namejam/0.2.0 (https://github.com/FireflySentinel/namejam)"
+
+# npm
 for name in NAME1 ... NAME25; do
-  code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 "https://registry.npmjs.org/$name" 2>/dev/null)
+  code=$(curl -s -A "$UA" -o /dev/null -w "%{http_code}" --max-time 2 "https://registry.npmjs.org/$name" 2>/dev/null)
   echo "$name npm $code"
+done
+
+# PyPI (if detected)
+for name in NAME1 ... NAME25; do
+  code=$(curl -s -A "$UA" -o /dev/null -w "%{http_code}" --max-time 2 "https://pypi.org/pypi/$name/json" 2>/dev/null)
+  echo "$name pypi $code"
+done
+
+# crates.io (if detected)
+for name in NAME1 ... NAME25; do
+  code=$(curl -s -A "$UA" -o /dev/null -w "%{http_code}" --max-time 2 "https://crates.io/api/v1/crates/$name" 2>/dev/null)
+  echo "$name crates $code"
 done
 ```
 
-### 3c. GitHub namespace crowding
+### 3d. GitHub namespace crowding
 
 GitHub crowding is checked in the **Finals Deep-Dive** (Step 7), not here. It requires
 `GITHUB_TOKEN` to be set and is reserved for the final 2-3 candidates the user is
@@ -689,8 +729,9 @@ Show "n/a" in the GitHub column of the comparison table.
 **If set:** Check each finalist:
 
 ```bash
+UA="namejam/0.2.0 (https://github.com/FireflySentinel/namejam)"
 for name in FINALIST1 FINALIST2 FINALIST3; do
-  count=$(curl -s -H "Accept: application/vnd.github.v3+json" \
+  count=$(curl -s -A "$UA" -H "Accept: application/vnd.github.v3+json" \
     -H "Authorization: token $GITHUB_TOKEN" \
     --max-time 3 \
     "https://api.github.com/search/repositories?q=${name}+in:name&per_page=1" 2>/dev/null \
