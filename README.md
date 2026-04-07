@@ -84,44 +84,19 @@ What would you like to do next?
 
 ## Install
 
-### Option 1: Plugin (recommended)
-
-```
-/plugin marketplace add FireflySentinel/namejam
-/plugin install namejam
-```
-
-Done. `/namejam` is now available in every project, with automatic updates.
-
-### Option 2: Manual (copy the skill file)
-
 ```bash
 mkdir -p ~/.claude/skills/namejam
 curl -fsSL https://raw.githubusercontent.com/FireflySentinel/namejam/main/skills/namejam/SKILL.md \
   -o ~/.claude/skills/namejam/SKILL.md
 ```
 
-Then type `/namejam` in any Claude Code session.
+Done. Type `/namejam` in any Claude Code session.
 
 ## Update
 
-Plugin install:
-
-```
-/plugin update namejam
-```
-
-Manual install: re-run the `curl` command above to get the latest version.
+Re-run the `curl` command above to get the latest version.
 
 ## Uninstall
-
-Plugin install:
-
-```
-/plugin uninstall namejam
-```
-
-Manual install:
 
 ```bash
 rm -rf ~/.claude/skills/namejam
