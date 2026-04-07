@@ -424,19 +424,15 @@ data. Mark all names as "Unchecked" and note that no registries were queried.
 Before running any DNS or registry checks, verify that required tools exist:
 
 ```bash
-command -v dig >/dev/null 2>&1 && echo "dig: ok" || echo "dig: missing"
+command -v python3 >/dev/null 2>&1 && echo "python3: ok" || echo "python3: missing"
 command -v curl >/dev/null 2>&1 && echo "curl: ok" || echo "curl: missing"
 ```
 
-**If `dig` is missing:** Tell the user:
-"Domain checking requires `dig`. Install it:
-- macOS: already installed
-- Ubuntu/Debian: `sudo apt-get install dnsutils`
-- RHEL/Fedora: `sudo dnf install bind-utils`
+**If `python3` is missing:** Tell the user:
+"Domain checking requires `python3` (pre-installed on macOS and most Linux distros).
+Skipping domain checks — registry checks will still run."
 
-Skipping domain checks for now — registry checks will still run."
-
-Mark all domain results as "unchecked" and proceed to Step 3b.
+Mark all domain results as "unchecked" and proceed to Step 3c.
 
 **If `curl` is missing:** Tell the user:
 "Registry checking requires `curl`. Cannot check availability without it."
@@ -444,17 +440,17 @@ Skip all availability checks and go to Step 4 with all names marked "Unchecked".
 
 ### 3b. Domain availability (DNS signal — always run first)
 
-For each of the 25 names, check if `{name}.com` has a DNS record via `dig`.
-No record suggests the domain might be free; a record means it's definitely in use.
+For each of the 25 names, check if `{name}.com` resolves via `python3` socket lookup.
+A resolved address means the domain is in use; a failure suggests it might be free.
 
 This is an approximate signal — domains can be registered without DNS records
-(parked, held, for sale). If all 10 `dig` calls fail, assume offline and show
+(parked, held, for sale). If all checks fail, assume offline and show
 names without availability data.
 
 ```bash
 for name in NAME1 NAME2 ... NAME25; do
-  result=$(dig +short "${name}.com" 2>/dev/null | head -1)
-  if [ -z "$result" ]; then echo "$name domain available"; else echo "$name domain taken"; fi
+  python3 -c "import socket; socket.gethostbyname('${name}.com')" 2>/dev/null \
+    && echo "$name domain taken" || echo "$name domain available"
 done
 ```
 
@@ -706,8 +702,8 @@ for name in FINALIST1 FINALIST2 FINALIST3; do
   # Strip hyphens/underscores for domain check
   domain=$(echo "$name" | tr -d '-_')
   for tld in com ai io dev net; do
-    result=$(dig +short "${domain}.${tld}" 2>/dev/null | head -1)
-    if [ -z "$result" ]; then echo "$name .${tld} available"; else echo "$name .${tld} taken"; fi
+    python3 -c "import socket; socket.gethostbyname('${domain}.${tld}')" 2>/dev/null \
+      && echo "$name .${tld} taken" || echo "$name .${tld} available"
   done
 done
 ```

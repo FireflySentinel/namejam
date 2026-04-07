@@ -106,7 +106,7 @@ rm -rf ~/.claude/skills/namejam
 
 - [Claude Code](https://claude.ai/code) (the CLI)
 - `curl` (pre-installed on macOS/Linux)
-- `dig` (pre-installed on macOS/Linux, part of `dnsutils` on some distros)
+- `python3` (pre-installed on macOS and most Linux distros)
 - Optional: `GITHUB_TOKEN` env var for GitHub namespace crowding checks in the finals round
 
 ## Name quality
