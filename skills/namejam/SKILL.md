@@ -444,8 +444,28 @@ For each of the 25 names, check if `{name}.com` resolves via `python3` socket lo
 A resolved address means the domain is in use; a failure suggests it might be free.
 
 This is an approximate signal — domains can be registered without DNS records
-(parked, held, for sale). If all checks fail, assume offline and show
-names without availability data.
+(parked, held, for sale).
+
+**IMPORTANT:** Run a sentinel check first to verify DNS works at all. Without this,
+environments with no DNS (sandboxes, proxies, offline) silently report every domain
+as "available" — a 100% false positive rate.
+
+```bash
+# Sentinel: verify DNS resolution works before trusting results
+if python3 -c "import socket; socket.gethostbyname('google.com')" 2>/dev/null; then
+  echo "DNS_AVAILABLE=1"
+else
+  echo "DNS_AVAILABLE=0"
+fi
+```
+
+**If `DNS_AVAILABLE=0`:** Tell the user:
+"DNS resolution is unavailable in this environment — domain checks skipped."
+Mark all domain results as "unchecked" and proceed to Step 3c. In Step 4, treat
+"unchecked" domains as unknown — never classify them as "available" or use them
+to filter names.
+
+**If `DNS_AVAILABLE=1`:** Run the per-name checks:
 
 ```bash
 for name in NAME1 NAME2 ... NAME25; do
@@ -695,7 +715,22 @@ earlier rounds or enter names they came up with themselves.
 
 ### 7b. Multi-TLD domain check
 
-For each finalist, check .com, .ai, .io, .dev, and .net:
+For each finalist, check .com, .ai, .io, .dev, and .net.
+
+**Re-run the DNS sentinel check** (the user's network may have changed since Step 3):
+
+```bash
+if python3 -c "import socket; socket.gethostbyname('google.com')" 2>/dev/null; then
+  echo "DNS_AVAILABLE=1"
+else
+  echo "DNS_AVAILABLE=0"
+fi
+```
+
+**If `DNS_AVAILABLE=0`:** Tell the user "DNS unavailable — domain columns will show 'unchecked'."
+Show "unchecked" for all TLD columns in the comparison table (Step 7d).
+
+**If `DNS_AVAILABLE=1`:** Run the per-name, per-TLD checks:
 
 ```bash
 for name in FINALIST1 FINALIST2 FINALIST3; do
