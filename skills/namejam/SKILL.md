@@ -465,13 +465,17 @@ Mark all domain results as "unchecked" and proceed to Step 3c. In Step 4, treat
 "unchecked" domains as unknown — never classify them as "available" or use them
 to filter names.
 
-**If `DNS_AVAILABLE=1`:** Run the per-name checks:
+**If `DNS_AVAILABLE=1`:** Run the per-name checks in parallel:
 
 ```bash
-for name in NAME1 NAME2 ... NAME25; do
+check_domain() {
+  local name=$1
   python3 -c "import socket; socket.gethostbyname('${name}.com')" 2>/dev/null \
     && echo "$name domain taken" || echo "$name domain available"
-done
+}
+export -f check_domain
+
+echo "NAME1 NAME2 ... NAME25" | tr ' ' '\n' | xargs -P 8 -I {} bash -c 'check_domain {}'
 ```
 
 ### 3c. Package registry checks (conditional)
@@ -504,26 +508,31 @@ Registries to check:
 **IMPORTANT:** Always include a User-Agent header. crates.io returns 403 for all
 requests without one, causing every name to be misclassified.
 
+Run all registry checks in parallel (8 concurrent requests) to keep total time under ~3s:
+
 ```bash
 UA="namejam/0.2.0 (https://github.com/FireflySentinel/namejam)"
 
-# npm
+check_registry() {
+  local name=$1 registry=$2 url=$3
+  code=$(curl -s -A "$UA" -o /dev/null -w "%{http_code}" --max-time 3 "$url" 2>/dev/null)
+  echo "$name $registry $code"
+}
+export -f check_registry
+export UA
+
+# Build the job list (only include detected registries)
+JOBS=""
 for name in NAME1 ... NAME25; do
-  code=$(curl -s -A "$UA" -o /dev/null -w "%{http_code}" --max-time 2 "https://registry.npmjs.org/$name" 2>/dev/null)
-  echo "$name npm $code"
+  # npm (if detected)
+  JOBS="$JOBS\n$name npm https://registry.npmjs.org/$name"
+  # PyPI (if detected)
+  JOBS="$JOBS\n$name pypi https://pypi.org/pypi/$name/json"
+  # crates.io (if detected)
+  JOBS="$JOBS\n$name crates https://crates.io/api/v1/crates/$name"
 done
 
-# PyPI (if detected)
-for name in NAME1 ... NAME25; do
-  code=$(curl -s -A "$UA" -o /dev/null -w "%{http_code}" --max-time 2 "https://pypi.org/pypi/$name/json" 2>/dev/null)
-  echo "$name pypi $code"
-done
-
-# crates.io (if detected)
-for name in NAME1 ... NAME25; do
-  code=$(curl -s -A "$UA" -o /dev/null -w "%{http_code}" --max-time 2 "https://crates.io/api/v1/crates/$name" 2>/dev/null)
-  echo "$name crates $code"
-done
+echo -e "$JOBS" | xargs -P 8 -I {} bash -c 'check_registry {}'
 ```
 
 ### 3d. GitHub namespace crowding
