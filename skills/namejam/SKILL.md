@@ -1,6 +1,6 @@
 ---
 name: namejam
-version: 0.2.0
+version: 0.3.0
 description: |
   Generate available project names with taste. Reads your project context,
   generates short memorable names (think Stripe, Linear, Notion), checks
@@ -85,44 +85,41 @@ The user can pick one of the four options or type their own description via "Oth
 
 After the project type is selected, present naming style options **tailored to the project type**.
 The available styles differ per type because some styles are natural for certain contexts
-and awkward for others. Use `AskUserQuestion`:
+and awkward for others. Use `AskUserQuestion` with `multiSelect: true` so the user can
+pick one or more styles. When multiple styles are selected, generate a proportional mix.
 
 **If Startup / product:**
 ```
-question: "What naming style do you prefer?"
-header: "Name style"
+question: "What naming styles do you want? Pick one or more."
+header: "Name styles"
 options:
-  - label: "Single word (Recommended)"
+  - label: "Single word"
     description: "stripe, notion, vercel, ramp — clean, brandable, domain-friendly"
   - label: "Compound"
     description: "airbnb, dropbox, mailchimp, fivetran — two words fused into one"
-  - label: "Mix of both"
-    description: "Generate both styles and let me compare"
-multiSelect: false
+multiSelect: true
 ```
 
 **If Open source project:**
 ```
-question: "What naming style do you prefer?"
-header: "Name style"
+question: "What naming styles do you want? Pick one or more."
+header: "Name styles"
 options:
-  - label: "Single word (Recommended)"
+  - label: "Single word"
     description: "vite, bun, astro, biome — clean, memorable, easy to type"
   - label: "Hyphenated"
     description: "left-hook, fast-check, vue-router — two words with a dash"
   - label: "Compound"
     description: "turborepo, ripgrep, slidev, unplugin — two words fused into one"
-  - label: "Mix of all"
-    description: "Generate all styles and let me compare"
-multiSelect: false
+multiSelect: true
 ```
 
 **If Dev tool / library:**
 ```
-question: "What naming style do you prefer?"
-header: "Name style"
+question: "What naming styles do you want? Pick one or more."
+header: "Name styles"
 options:
-  - label: "Single word (Recommended)"
+  - label: "Single word"
     description: "grep, curl, ruff, bat, dust — ultra-short, typeable"
   - label: "Hyphenated"
     description: "fast-glob, ts-node, dry-run — functional, descriptive"
@@ -130,23 +127,21 @@ options:
     description: "ripgrep, watchexec, difftastic — two words fused"
   - label: "Prefix pattern"
     description: "go-fiber, re-send, un-plugin — prefix signals ecosystem or function"
-multiSelect: false
+multiSelect: true
 ```
 
 **If Internal / personal:**
 ```
-question: "What naming style do you prefer?"
-header: "Name style"
+question: "What naming styles do you want? Pick one or more."
+header: "Name styles"
 options:
-  - label: "Single word (Recommended)"
+  - label: "Single word"
     description: "cobra, phoenix, atlas, onyx — codename feel"
   - label: "Compound"
     description: "topgun, redfox, icepick, ironclad — vivid two-word codenames"
   - label: "snake_case"
     description: "red_fox, ice_pick, star_fall — internal tool / script style"
-  - label: "Mix of all"
-    description: "Generate all styles and let me compare"
-multiSelect: false
+multiSelect: true
 ```
 
 **STOP here and wait for the user's answer before generating names.**
@@ -171,8 +166,9 @@ The hard constraint "No hyphens" is SUSPENDED for this session.
 **snake_case:** Two words joined by underscore. "red_fox", "ice_pick", "star_fall".
 The hard constraint "alphanumeric only" is SUSPENDED to allow underscores.
 
-**Mix:** Generate a proportional mix of the styles offered for that project type.
-Roughly equal split across all available styles for the type.
+**Multiple styles selected:** Generate a proportional mix of the selected styles.
+Roughly equal split across the chosen styles (e.g., if user picks Single word + Compound,
+generate ~12-13 of each).
 
 The project type shapes the naming strategy:
 
@@ -401,23 +397,9 @@ After generating, **deduplicate** the list (case-insensitive).
 
 ## Step 3: Check Availability (all 25 candidates)
 
-Before running any checks, ask the user using `AskUserQuestion`:
-
-```
-question: "Want me to check name availability online? (DNS, npm, PyPI, etc.)"
-header: "Availability"
-options:
-  - label: "Yes, check availability (Recommended)"
-    description: "Takes ~10 seconds. Checks .com domains and relevant package registries."
-  - label: "Skip checks"
-    description: "Just show me the names — I'll check availability myself."
-multiSelect: false
-```
-
-**If "Skip checks":** Go directly to Step 4 and present all 25 names without availability
-data. Mark all names as "Unchecked" and note that no registries were queried.
-
-**If "Yes, check availability":** Proceed with the checks below.
+Auto-run all availability checks without asking. DNS and registry checks are fast (~10s)
+and the results are the whole point. If the environment can't run checks (missing tools,
+no DNS), the preflight logic below handles fallbacks gracefully.
 
 ### 3a. Preflight check (run once before any availability checks)
 
@@ -483,22 +465,7 @@ echo "NAME1 NAME2 ... NAME25" | tr ' ' '\n' | xargs -P 8 -I {} bash -c 'check_do
 Only run if the relevant manifest file was detected in Step 1a. If no manifest files
 were detected, skip this step entirely (nothing to check).
 
-If registries were detected, ask the user using `AskUserQuestion`:
-
-```
-question: "Also check package registry availability? (detected: {list detected registries})"
-header: "Registries"
-options:
-  - label: "Yes, check registries (Recommended)"
-    description: "Queries {detected registries} for each name. Takes ~10 seconds."
-  - label: "Skip registry checks"
-    description: "Only use the DNS results above."
-multiSelect: false
-```
-
-**If "Skip registry checks":** Skip to Step 3d.
-
-**If "Yes, check registries":** Run the checks below.
+Auto-run all detected registry checks without asking.
 
 Registries to check:
 - **npm** (if `package.json` exists) — query `registry.npmjs.org/{name}`, 404 = available
@@ -511,7 +478,7 @@ requests without one, causing every name to be misclassified.
 Run all registry checks in parallel (8 concurrent requests) to keep total time under ~3s:
 
 ```bash
-UA="namejam/0.2.0 (https://github.com/FireflySentinel/namejam)"
+UA="namejam/0.3.0 (https://github.com/FireflySentinel/namejam)"
 
 check_registry() {
   local name=$1 registry=$2 url=$3
@@ -769,7 +736,7 @@ Show "n/a" in the GitHub column of the comparison table.
 **If set:** Check each finalist:
 
 ```bash
-UA="namejam/0.2.0 (https://github.com/FireflySentinel/namejam)"
+UA="namejam/0.3.0 (https://github.com/FireflySentinel/namejam)"
 for name in FINALIST1 FINALIST2 FINALIST3; do
   count=$(curl -s -A "$UA" -H "Accept: application/vnd.github.v3+json" \
     -H "Authorization: token $GITHUB_TOKEN" \
