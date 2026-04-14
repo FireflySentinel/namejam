@@ -24,7 +24,7 @@ The user should never see a taken name. Filter before surfacing, not after.
 
 ## Step 0: Print version
 
-Print the version from this file's frontmatter: `Running namejam v0.4.0`
+Read the `version` field from this file's YAML frontmatter and print: `Running namejam v{version}`
 
 ---
 

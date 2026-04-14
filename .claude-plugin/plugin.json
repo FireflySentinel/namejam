@@ -1,5 +1,5 @@
 {
   "name": "namejam",
   "description": "Generate available project names with taste — checks GitHub, npm, PyPI, and domain availability",
-  "version": "0.2.0"
+  "version": "0.4.0"
 }

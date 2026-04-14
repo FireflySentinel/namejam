@@ -25,7 +25,7 @@ AI suggests names that are already taken everywhere. Manually checking npm, PyPI
 ```
 > /namejam
 
-Running namejam v0.2.0
+Running namejam v0.4.0
 
 Reading project context...
 
@@ -52,11 +52,11 @@ Available names for your project
   2. ark-feed   — arknights + feed — direct and clear
                    npm: available | domain: arkfeed.com likely taken
   3. cal-knit   — calendar + knit — weaving events into feeds
-                   npm: available | domain: calknit.com appears free
+                   npm: available | domain: calknit.com no DNS record (verify on registrar)
   4. ink-drop   — ink (notices) + drop — events landing
                    npm: available | domain: inkdrop.com likely taken
   5. ban-tap    — banner + tap — tapping into schedules
-                   npm: available | domain: bantap.com appears free
+                   npm: available | domain: bantap.com no DNS record (verify on registrar)
 
 Close but taken
   - eve-sync   — taken on npm (eve-sync@1.0.0 exists)
@@ -84,21 +84,33 @@ What would you like to do next?
 
 ## Install
 
+### From Anthropic Marketplace (recommended)
+
+```bash
+claude plugin install namejam@FireflySentinel
+```
+
+Done. Type `/namejam` in any Claude Code session.
+
+### Manual install
+
 ```bash
 mkdir -p ~/.claude/skills/namejam
 curl -fsSL https://raw.githubusercontent.com/FireflySentinel/namejam/main/skills/namejam/SKILL.md \
   -o ~/.claude/skills/namejam/SKILL.md
 ```
 
-Done. Type `/namejam` in any Claude Code session.
-
 ## Update
 
-Re-run the `curl` command above to get the latest version.
+Marketplace installs update automatically. For manual installs, re-run the `curl` command above.
 
 ## Uninstall
 
 ```bash
+# Marketplace install
+claude plugin remove namejam@FireflySentinel
+
+# Manual install
 rm -rf ~/.claude/skills/namejam
 ```
 
