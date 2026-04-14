@@ -84,9 +84,10 @@ What would you like to do next?
 
 ## Install
 
-### From Anthropic Marketplace (recommended)
+### From Claude Code Marketplace (recommended)
 
 ```bash
+claude plugin marketplace add FireflySentinel/namejam
 claude plugin install namejam@FireflySentinel
 ```
 
@@ -109,6 +110,7 @@ Marketplace installs update automatically. For manual installs, re-run the `curl
 ```bash
 # Marketplace install
 claude plugin remove namejam@FireflySentinel
+claude plugin marketplace remove FireflySentinel
 
 # Manual install
 rm -rf ~/.claude/skills/namejam

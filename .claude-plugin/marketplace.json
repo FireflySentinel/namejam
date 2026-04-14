@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "namejam",
+  "name": "FireflySentinel",
   "description": "Generate available project names with taste",
   "owner": {
     "name": "FireflySentinel"
@@ -9,7 +9,7 @@
     {
       "name": "namejam",
       "description": "Generate available project names with taste — checks GitHub, npm, PyPI, and domain availability",
-      "source": "."
+      "source": "./"
     }
   ]
 }
