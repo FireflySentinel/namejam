@@ -1,6 +1,6 @@
 ---
 name: namejam
-version: 0.3.0
+version: 0.4.0
 description: |
   Generate available project names with taste. Reads your project context,
   generates short memorable names (think Stripe, Linear, Notion), checks
@@ -24,7 +24,7 @@ The user should never see a taken name. Filter before surfacing, not after.
 
 ## Step 0: Print version
 
-Print the version from this file's frontmatter: `Running namejam v0.2.0`
+Print the version from this file's frontmatter: `Running namejam v0.4.0`
 
 ---
 
@@ -452,13 +452,31 @@ to filter names.
 ```bash
 check_domain() {
   local name=$1
-  python3 -c "import socket; socket.gethostbyname('${name}.com')" 2>/dev/null \
-    && echo "$name domain taken" || echo "$name domain available"
+  # Sanitize: reject names that aren't valid domain labels
+  if ! echo "$name" | grep -qE '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'; then
+    echo "$name domain INVALID_NAME"
+    return
+  fi
+  if python3 -c "import socket; socket.gethostbyname('${name}.com')" 2>/dev/null; then
+    echo "$name domain DNS_RESOLVES"
+  else
+    echo "$name domain NO_DNS"
+  fi
 }
 export -f check_domain
 
-echo "NAME1 NAME2 ... NAME25" | tr ' ' '\n' | xargs -P 8 -I {} bash -c 'check_domain {}'
+echo "NAME1 NAME2 ... NAME25" | tr ' ' '\n' | xargs -P 8 -I {} bash -c 'check_domain "$1"' _ {}
 ```
+
+Interpret domain results for display:
+- `DNS_RESOLVES` → "{name}.com taken (DNS resolves)"
+- `NO_DNS` → "{name}.com no DNS record (does not mean unregistered — verify on registrar)"
+- `INVALID_NAME` → skip from domain display
+
+**IMPORTANT:** "no DNS record" does NOT mean available. Domains can be registered without
+A records (parked, held for sale, MX-only). Conversely, DNS can resolve for unregistered
+domains (registrar parking pages, catch-all DNS). Domain status from DNS is a weak signal.
+Never tell the user a domain "appears free" or "available" based solely on DNS.
 
 ### 3c. Package registry checks (conditional)
 
@@ -467,18 +485,72 @@ were detected, skip this step entirely (nothing to check).
 
 Auto-run all detected registry checks without asking.
 
+#### Input sanitization (MANDATORY — run before any registry query)
+
+LLM-generated names enter shell commands and URLs. Sanitize every name before use:
+
+```bash
+sanitize_name() {
+  echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9._-]//g'
+}
+```
+
+Apply `sanitize_name` to every candidate before building registry URLs. If a name
+becomes empty after sanitization, skip it.
+
+#### npm pre-validation
+
+npm (v3+) rejects package names that contain uppercase letters, don't match
+`^[a-z0-9][a-z0-9._-]*$`, or are reserved/too-similar to popular packages.
+
+Before querying the npm registry, validate the name:
+
+```bash
+validate_npm_name() {
+  local name=$1
+  if ! echo "$name" | grep -qE '^[a-z0-9][a-z0-9._-]*$'; then
+    echo "$name npm INVALID"
+    return 1
+  fi
+  return 0
+}
+```
+
+If `validate_npm_name` fails, mark the name as "npm: invalid name" and do NOT query
+the registry. A 404 for an invalid name does not mean "available."
+
+#### PyPI name normalization (PEP 503)
+
+PyPI normalizes names: `Foo_Bar`, `foo-bar`, `foo.bar` all resolve to `foo-bar`.
+Always normalize before querying to avoid false "available" results:
+
+```bash
+normalize_pypi_name() {
+  echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[-_.]\{1,\}/-/g'
+}
+```
+
+Use the normalized name in the URL: `pypi.org/pypi/$(normalize_pypi_name "$name")/json`
+
+#### Registry queries
+
 Registries to check:
-- **npm** (if `package.json` exists) — query `registry.npmjs.org/{name}`, 404 = available
-- **PyPI** (if `pyproject.toml`/`setup.py` exists) — query `pypi.org/pypi/{name}/json`, 404 = available
+- **npm** (if `package.json` exists) — validate name first, then query `registry.npmjs.org/{name}`, 404 = likely available
+- **PyPI** (if `pyproject.toml`/`setup.py` exists) — normalize name first, then query `pypi.org/pypi/{normalized}/json`, 404 = available
 - **crates.io** (if `Cargo.toml` exists) — query `crates.io/api/v1/crates/{name}`, 404 = available
 
 **IMPORTANT:** Always include a User-Agent header. crates.io returns 403 for all
 requests without one, causing every name to be misclassified.
 
-Run all registry checks in parallel (8 concurrent requests) to keep total time under ~3s:
+**npm caveat:** A 404 from the npm registry means the exact name isn't published, but
+npm may still reject it on publish due to its reserved name list or name similarity
+filter (names too close to `react`, `express`, `angular`, etc.). Note this in the
+output: registry 404 means "not yet taken," not "guaranteed publishable."
+
+Run all registry checks in parallel (8 concurrent) to keep total time under ~3s:
 
 ```bash
-UA="namejam/0.3.0 (https://github.com/FireflySentinel/namejam)"
+UA="namejam/0.4.0 (https://github.com/FireflySentinel/namejam)"
 
 check_registry() {
   local name=$1 registry=$2 url=$3
@@ -491,15 +563,21 @@ export UA
 # Build the job list (only include detected registries)
 JOBS=""
 for name in NAME1 ... NAME25; do
-  # npm (if detected)
-  JOBS="$JOBS\n$name npm https://registry.npmjs.org/$name"
-  # PyPI (if detected)
-  JOBS="$JOBS\n$name pypi https://pypi.org/pypi/$name/json"
+  clean=$(sanitize_name "$name")
+  [ -z "$clean" ] && continue
+
+  # npm (if detected) — skip invalid names
+  if validate_npm_name "$clean" 2>/dev/null; then
+    JOBS="$JOBS\n$clean npm https://registry.npmjs.org/$clean"
+  fi
+  # PyPI (if detected) — use normalized name in URL
+  pypi_name=$(normalize_pypi_name "$clean")
+  JOBS="$JOBS\n$clean pypi https://pypi.org/pypi/$pypi_name/json"
   # crates.io (if detected)
-  JOBS="$JOBS\n$name crates https://crates.io/api/v1/crates/$name"
+  JOBS="$JOBS\n$clean crates https://crates.io/api/v1/crates/$clean"
 done
 
-echo -e "$JOBS" | xargs -P 8 -I {} bash -c 'check_registry {}'
+echo -e "$JOBS" | xargs -P 8 -L 1 bash -c 'check_registry "$1" "$2" "$3"' _
 ```
 
 ### 3d. GitHub namespace crowding
@@ -518,17 +596,20 @@ Filtering rules depend on the project type selected in Step 1b:
 
 **If Startup / product:**
 Domain is a primary signal. A taken .com domain counts against the name.
-- **Available:** Not taken on any checked package registry AND .com domain appears free.
-- **Likely available:** Not taken on registries but .com domain is taken, or GitHub crowding is moderate (6-50).
-- **Taken:** Taken on at least one package registry, OR 50+ GitHub repos.
+- **Available:** Not taken on any checked package registry AND .com has no DNS record.
+- **Likely available:** Not taken on registries but .com has DNS record (likely taken or parked).
+- **Taken:** Taken on at least one package registry.
 - **Inconclusive:** Could not verify one or more registries.
 
 **If Open source project or Dev tool / library:**
 Registry availability is what matters. Domain is informational only — never disqualify a name for having a taken domain.
 - **Available:** Not taken on any checked package registry (npm/PyPI/crates.io).
-- **Likely available:** Not taken on registries but moderate GitHub crowding (6-50), or GitHub not checked.
-- **Taken:** Taken on at least one package registry, OR 50+ GitHub repos.
+- **Likely available:** Not taken on registries, domain status unknown or not checked.
+- **Taken:** Taken on at least one package registry.
 - **Inconclusive:** Could not verify one or more registries.
+
+Note: GitHub namespace crowding is checked in Step 7 (Finals Deep-Dive) only, not here.
+Do not reference GitHub data in Step 4 filtering.
 Show domain status as a reference column, but do NOT move names to "Close but taken" based on domain alone.
 
 **If Internal / personal:**
@@ -546,14 +627,14 @@ Present results in this exact format:
 ## Available names for your project
 
   1. callit    — [one-line rationale: why this name fits your project]
-                 npm: available | domain: callit.com appears free
+                 npm: available | domain: callit.com no DNS record (verify on registrar)
   2. monkr     — [rationale]
                  domain: monkr.com likely taken
   3. ...
 
 ## Close but taken
 
-  - forja     — forja.com resolves (likely taken/parked)
+  - forja     — forja.com DNS resolves (taken or parked)
   - marca     — taken on npm (marca@1.2.0 exists)
   - ...
 
@@ -566,7 +647,8 @@ Results are approximate. Verify your chosen name before creating the repo.
 - Show **up to 5 available names**. If fewer pass all checks, show what you have.
 - Show **3-5 "close but taken" names** with why they didn't make it.
 - The rationale should connect the name to the project's purpose/domain.
-- Domain phrasing: "appears free" (no DNS record) or "likely taken" (DNS resolves).
+- Domain phrasing: "no DNS record (verify on registrar)" or "taken (DNS resolves)".
+  Never say "appears free" or "available" for domains based solely on DNS.
 - If any registry was inconclusive, note it.
 
 ### After presenting results, ask what's next
@@ -706,18 +788,36 @@ fi
 **If `DNS_AVAILABLE=0`:** Tell the user "DNS unavailable — domain columns will show 'unchecked'."
 Show "unchecked" for all TLD columns in the comparison table (Step 7d).
 
-**If `DNS_AVAILABLE=1`:** Run the per-name, per-TLD checks:
+**If `DNS_AVAILABLE=1`:** Run DNS checks, then whois for domains without DNS records
+(only 2-3 finalists, so the extra ~2s per whois lookup is acceptable):
 
 ```bash
 for name in FINALIST1 FINALIST2 FINALIST3; do
   # Strip hyphens/underscores for domain check
   domain=$(echo "$name" | tr -d '-_')
   for tld in com ai io dev net; do
-    python3 -c "import socket; socket.gethostbyname('${domain}.${tld}')" 2>/dev/null \
-      && echo "$name .${tld} taken" || echo "$name .${tld} available"
+    fqdn="${domain}.${tld}"
+    if python3 -c "import socket; socket.gethostbyname('${fqdn}')" 2>/dev/null; then
+      echo "$name .${tld} DNS_RESOLVES"
+    elif command -v whois >/dev/null 2>&1; then
+      # No DNS — use whois for a more definitive answer
+      if whois "$fqdn" 2>/dev/null | grep -qi "no match\|not found\|no data found"; then
+        echo "$name .${tld} WHOIS_FREE"
+      else
+        echo "$name .${tld} WHOIS_REGISTERED"
+      fi
+    else
+      echo "$name .${tld} NO_DNS_ONLY"
+    fi
   done
 done
 ```
+
+Interpret finals domain results for the comparison table:
+- `DNS_RESOLVES` → "taken"
+- `WHOIS_FREE` → "likely available"
+- `WHOIS_REGISTERED` → "registered (no DNS but whois confirms)"
+- `NO_DNS_ONLY` → "no DNS (verify on registrar)"
 
 ### 7c. GitHub crowding check
 
@@ -736,7 +836,7 @@ Show "n/a" in the GitHub column of the comparison table.
 **If set:** Check each finalist:
 
 ```bash
-UA="namejam/0.3.0 (https://github.com/FireflySentinel/namejam)"
+UA="namejam/0.4.0 (https://github.com/FireflySentinel/namejam)"
 for name in FINALIST1 FINALIST2 FINALIST3; do
   count=$(curl -s -A "$UA" -H "Accept: application/vnd.github.v3+json" \
     -H "Authorization: token $GITHUB_TOKEN" \
@@ -756,11 +856,12 @@ Interpret: 0 = unique namespace, 1-5 = low crowding, 6-50 = moderate, 50+ = crow
 
   Name        .com    .ai     .io     .dev    .net    GitHub    Registry
   ──────────  ──────  ──────  ──────  ──────  ──────  ────────  ────────
-  callit      free    free    taken   free    taken   3 repos   npm: free
-  mintname    free    taken   taken   free    free    0 repos   npm: free
-  namecast    free    free    free    taken   taken   12 repos  npm: free
+  callit      avail   avail   taken   avail   taken   3 repos   npm: avail
+  mintname    avail   taken   taken   avail   avail   0 repos   npm: avail
+  namecast    reg'd   avail   avail   taken   taken   12 repos  npm: avail
 
-  Legend: free = no DNS record | taken = DNS resolves | N repos = GitHub search results
+  Legend: avail = whois not found | taken = DNS resolves | reg'd = whois registered, no DNS
+          no DNS = no A record, verify on registrar | N repos = GitHub search results
 ```
 
 After the table, give a brief recommendation:
