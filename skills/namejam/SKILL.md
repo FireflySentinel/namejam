@@ -569,24 +569,23 @@ check_registry() {
 export -f check_registry
 export UA
 
-# Build the job list (only include detected registries)
-JOBS=""
-for name in NAME1 ... NAME25; do
-  clean=$(sanitize_name "$name")
-  [ -z "$clean" ] && continue
+# Build and pipe job list directly (no echo -e — portable across bash/zsh/sh)
+{
+  for name in NAME1 ... NAME25; do
+    clean=$(sanitize_name "$name")
+    [ -z "$clean" ] && continue
 
-  # npm (if detected) — skip invalid names
-  if validate_npm_name "$clean" 2>/dev/null; then
-    JOBS="$JOBS\n$clean npm https://registry.npmjs.org/$clean"
-  fi
-  # PyPI (if detected) — use normalized name in URL
-  pypi_name=$(normalize_pypi_name "$clean")
-  JOBS="$JOBS\n$clean pypi https://pypi.org/pypi/$pypi_name/json"
-  # crates.io (if detected)
-  JOBS="$JOBS\n$clean crates https://crates.io/api/v1/crates/$clean"
-done
-
-echo -e "$JOBS" | xargs -P 8 -L 1 bash -c 'check_registry "$1" "$2" "$3"' _
+    # npm (if detected) — skip invalid names
+    if validate_npm_name "$clean" 2>/dev/null; then
+      printf '%s %s %s\n' "$clean" "npm" "https://registry.npmjs.org/$clean"
+    fi
+    # PyPI (if detected) — use normalized name in URL
+    pypi_name=$(normalize_pypi_name "$clean")
+    printf '%s %s %s\n' "$clean" "pypi" "https://pypi.org/pypi/$pypi_name/json"
+    # crates.io (if detected)
+    printf '%s %s %s\n' "$clean" "crates" "https://crates.io/api/v1/crates/$clean"
+  done
+} | xargs -P 8 -L 1 bash -c 'check_registry "$1" "$2" "$3"' _
 ```
 
 ### 3d. GitHub namespace crowding

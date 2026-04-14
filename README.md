@@ -48,15 +48,15 @@ What naming style do you prefer?
 Available names for your project
 
   1. eve-drop   — "eavesdrop" wordplay — listens for events
-                   npm: available | domain: evedrop.com likely taken
+                   npm: available | domain: evedrop.com taken (DNS resolves)
   2. ark-feed   — arknights + feed — direct and clear
-                   npm: available | domain: arkfeed.com likely taken
+                   npm: available | domain: arkfeed.com taken (DNS resolves)
   3. cal-knit   — calendar + knit — weaving events into feeds
-                   npm: available | domain: calknit.com no DNS record (verify on registrar)
+                   npm: available | domain: calknit.com no DNS record (does not mean unregistered — verify on registrar)
   4. ink-drop   — ink (notices) + drop — events landing
-                   npm: available | domain: inkdrop.com likely taken
+                   npm: available | domain: inkdrop.com taken (DNS resolves)
   5. ban-tap    — banner + tap — tapping into schedules
-                   npm: available | domain: bantap.com no DNS record (verify on registrar)
+                   npm: available | domain: bantap.com no DNS record (does not mean unregistered — verify on registrar)
 
 Close but taken
   - eve-sync   — taken on npm (eve-sync@1.0.0 exists)
