@@ -1,6 +1,6 @@
 ---
 name: namejam
-version: 0.4.0
+version: 0.4.1
 description: |
   Generate available project names with taste. Reads your project context,
   generates short memorable names (think Stripe, Linear, Notion), checks
@@ -442,39 +442,35 @@ environments with no DNS (sandboxes, proxies, offline) silently report every dom
 as "available" — a 100% false positive rate.
 
 ```bash
-# Sentinel: verify DNS resolution works before trusting results
-if python3 -c "import socket; socket.gethostbyname('google.com')" 2>/dev/null; then
-  echo "DNS_AVAILABLE=1"
-else
-  echo "DNS_AVAILABLE=0"
-fi
-```
+python3 -c "
+import socket, concurrent.futures, sys, re
+socket.setdefaulttimeout(3)
 
-**If `DNS_AVAILABLE=0`:** Tell the user:
-"DNS resolution is unavailable in this environment — domain checks skipped."
-Mark all domain results as "unchecked" and proceed to Step 3c. In Step 4, treat
-"unchecked" domains as unknown — never classify them as "available" or use them
-to filter names.
+# Sentinel: verify DNS works before trusting results
+try:
+    socket.gethostbyname('google.com')
+except Exception:
+    print('DNS_AVAILABLE=0')
+    sys.exit(0)
 
-**If `DNS_AVAILABLE=1`:** Run the per-name checks in parallel:
+print('DNS_AVAILABLE=1')
 
-```bash
-check_domain() {
-  local name=$1
-  # Sanitize: reject names that aren't valid domain labels
-  if ! echo "$name" | grep -qE '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'; then
-    echo "$name domain INVALID_NAME"
-    return
-  fi
-  if python3 -c "import socket; socket.gethostbyname('${name}.com')" 2>/dev/null; then
-    echo "$name domain DNS_RESOLVES"
-  else
-    echo "$name domain NO_DNS"
-  fi
-}
-export -f check_domain
+names = sys.argv[1:]
+valid = re.compile(r'^[a-z0-9]([a-z0-9-]*[a-z0-9])?$')
 
-echo "NAME1 NAME2 ... NAME25" | tr ' ' '\n' | xargs -P 8 -I {} bash -c 'check_domain "$1"' _ {}
+def check(name):
+    if not valid.match(name):
+        return f'{name} domain INVALID_NAME'
+    try:
+        socket.gethostbyname(f'{name}.com')
+        return f'{name} domain DNS_RESOLVES'
+    except Exception:
+        return f'{name} domain NO_DNS'
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=10) as pool:
+    for result in pool.map(check, names):
+        print(result)
+" NAME1 NAME2 ... NAME25
 ```
 
 Interpret domain results for display:
@@ -556,36 +552,56 @@ npm may still reject it on publish due to its reserved name list or name similar
 filter (names too close to `react`, `express`, `angular`, etc.). Note this in the
 output: registry 404 means "not yet taken," not "guaranteed publishable."
 
-Run all registry checks in parallel (8 concurrent) to keep total time under ~3s:
+Run all registry checks in parallel (10 concurrent) to keep total time under ~3s:
 
 ```bash
-UA="namejam/0.4.0 (https://github.com/FireflySentinel/namejam)"
+python3 -c "
+import subprocess, concurrent.futures, sys, re
 
-check_registry() {
-  local name=$1 registry=$2 url=$3
-  code=$(curl -s -A "$UA" -o /dev/null -w "%{http_code}" --max-time 3 "$url" 2>/dev/null)
-  echo "$name $registry $code"
-}
-export -f check_registry
-export UA
+UA = 'namejam/0.4.1 (https://github.com/FireflySentinel/namejam)'
+names = sys.argv[1:]
 
-# Build and pipe job list directly (no echo -e — portable across bash/zsh/sh)
-{
-  for name in NAME1 ... NAME25; do
-    clean=$(sanitize_name "$name")
-    [ -z "$clean" ] && continue
+# Registries to check — edit this list based on detected manifest files
+# Options: 'npm', 'pypi', 'crates'
+registries = ['npm']  # example: add 'pypi', 'crates' as needed
 
-    # npm (if detected) — skip invalid names
-    if validate_npm_name "$clean" 2>/dev/null; then
-      printf '%s %s %s\n' "$clean" "npm" "https://registry.npmjs.org/$clean"
-    fi
-    # PyPI (if detected) — use normalized name in URL
-    pypi_name=$(normalize_pypi_name "$clean")
-    printf '%s %s %s\n' "$clean" "pypi" "https://pypi.org/pypi/$pypi_name/json"
-    # crates.io (if detected)
-    printf '%s %s %s\n' "$clean" "crates" "https://crates.io/api/v1/crates/$clean"
-  done
-} | xargs -P 8 -L 1 bash -c 'check_registry "$1" "$2" "$3"' _
+def sanitize(name):
+    return re.sub(r'[^a-z0-9._-]', '', name.lower())
+
+def normalize_pypi(name):
+    return re.sub(r'[-_.]+', '-', name.lower())
+
+def valid_npm(name):
+    return bool(re.match(r'^[a-z0-9][a-z0-9._-]*$', name))
+
+def check(job):
+    name, registry, url = job
+    try:
+        r = subprocess.run(
+            ['curl', '-s', '-A', UA, '-o', '/dev/null', '-w', '%{http_code}', '--max-time', '3', url],
+            capture_output=True, text=True, timeout=5
+        )
+        return f'{name} {registry} {r.stdout.strip()}'
+    except Exception:
+        return f'{name} {registry} TIMEOUT'
+
+jobs = []
+for raw in names:
+    name = sanitize(raw)
+    if not name:
+        continue
+    if 'npm' in registries and valid_npm(name):
+        jobs.append((name, 'npm', f'https://registry.npmjs.org/{name}'))
+    if 'pypi' in registries:
+        pypi = normalize_pypi(name)
+        jobs.append((name, 'pypi', f'https://pypi.org/pypi/{pypi}/json'))
+    if 'crates' in registries:
+        jobs.append((name, 'crates', f'https://crates.io/api/v1/crates/{name}'))
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=10) as pool:
+    for result in pool.map(check, jobs):
+        print(result)
+" NAME1 NAME2 ... NAME25
 ```
 
 ### 3d. GitHub namespace crowding
@@ -786,39 +802,48 @@ For each finalist, check .com, .ai, .io, .dev, and .net.
 **Re-run the DNS sentinel check** (the user's network may have changed since Step 3):
 
 ```bash
-if python3 -c "import socket; socket.gethostbyname('google.com')" 2>/dev/null; then
-  echo "DNS_AVAILABLE=1"
-else
-  echo "DNS_AVAILABLE=0"
-fi
-```
+python3 -c "
+import socket, subprocess, shutil, concurrent.futures, sys
+socket.setdefaulttimeout(3)
 
-**If `DNS_AVAILABLE=0`:** Tell the user "DNS unavailable — domain columns will show 'unchecked'."
-Show "unchecked" for all TLD columns in the comparison table (Step 7d).
+# Sentinel: verify DNS works
+try:
+    socket.gethostbyname('google.com')
+except Exception:
+    print('DNS_AVAILABLE=0')
+    sys.exit(0)
 
-**If `DNS_AVAILABLE=1`:** Run DNS checks, then whois for domains without DNS records
-(only 2-3 finalists, so the extra ~2s per whois lookup is acceptable):
+print('DNS_AVAILABLE=1')
 
-```bash
-for name in FINALIST1 FINALIST2 FINALIST3; do
-  # Strip hyphens/underscores for domain check
-  domain=$(echo "$name" | tr -d '-_')
-  for tld in com ai io dev net; do
-    fqdn="${domain}.${tld}"
-    if python3 -c "import socket; socket.gethostbyname('${fqdn}')" 2>/dev/null; then
-      echo "$name .${tld} DNS_RESOLVES"
-    elif command -v whois >/dev/null 2>&1; then
-      # No DNS — use whois for a more definitive answer
-      if whois "$fqdn" 2>/dev/null | grep -qi "no match\|not found\|no data found"; then
-        echo "$name .${tld} WHOIS_FREE"
-      else
-        echo "$name .${tld} WHOIS_REGISTERED"
-      fi
-    else
-      echo "$name .${tld} NO_DNS_ONLY"
-    fi
-  done
-done
+names = sys.argv[1:]
+tlds = ['com', 'ai', 'io', 'dev', 'net']
+has_whois = shutil.which('whois') is not None
+
+def check(pair):
+    name, tld = pair
+    domain = name.replace('-', '').replace('_', '')
+    fqdn = f'{domain}.{tld}'
+    try:
+        socket.gethostbyname(fqdn)
+        return f'{name} .{tld} DNS_RESOLVES'
+    except Exception:
+        pass
+    if has_whois:
+        try:
+            out = subprocess.run(['whois', fqdn], capture_output=True, text=True, timeout=5)
+            if any(s in out.stdout.lower() for s in ['no match', 'not found', 'no data found']):
+                return f'{name} .{tld} WHOIS_FREE'
+            else:
+                return f'{name} .{tld} WHOIS_REGISTERED'
+        except Exception:
+            pass
+    return f'{name} .{tld} NO_DNS_ONLY'
+
+pairs = [(n, t) for n in names for t in tlds]
+with concurrent.futures.ThreadPoolExecutor(max_workers=10) as pool:
+    for result in pool.map(check, pairs):
+        print(result)
+" FINALIST1 FINALIST2 FINALIST3
 ```
 
 Interpret finals domain results for the comparison table:
@@ -844,7 +869,7 @@ Show "n/a" in the GitHub column of the comparison table.
 **If set:** Check each finalist:
 
 ```bash
-UA="namejam/0.4.0 (https://github.com/FireflySentinel/namejam)"
+UA="namejam/0.4.1 (https://github.com/FireflySentinel/namejam)"
 for name in FINALIST1 FINALIST2 FINALIST3; do
   count=$(curl -s -A "$UA" -H "Accept: application/vnd.github.v3+json" \
     -H "Authorization: token $GITHUB_TOKEN" \
