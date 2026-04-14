@@ -79,7 +79,10 @@ multiSelect: false
 
 The user can pick one of the four options or type their own description via "Other".
 
-**STOP here and wait for the user's answer before continuing.**
+**You MUST call `AskUserQuestion` and STOP here.** Do NOT proceed to Step 1c, do NOT
+generate any names, do NOT skip ahead — even if the user's initial message implies a
+preference (e.g., "generate startup names"). The interactive selection is required.
+Wait for the user's explicit response before continuing.
 
 ### 1c. Ask the user about naming style
 
@@ -144,27 +147,30 @@ options:
 multiSelect: true
 ```
 
-**STOP here and wait for the user's answer before generating names.**
+**You MUST call `AskUserQuestion` and STOP here.** Do NOT proceed to Step 2, do NOT
+generate any names until the user responds. The style selection directly controls
+which characters are allowed (Step 2 hard constraints) — skipping it produces
+names with wrong character rules.
 
 ### How each style affects generation:
 
-**Single word:** Default behavior. Alphanumeric only, no separators.
+**Single word:** Alphanumeric only `[a-z0-9]`, no separators.
 
 **Compound:** Two words fused into one without separator. "turborepo", "ripgrep", "airbnb".
-Each component should be 2-5 characters. Total 5-12 characters. The hard constraint
-"alphanumeric only" remains in effect.
+Each component should be 2-5 characters. Total 5-12 characters.
+Allowed characters: `[a-z0-9]` only.
 
 **Hyphenated:** Two words joined by a hyphen. "left-hook", "fast-check", "vue-router".
 Each word should be 2-6 characters. Total (including hyphen) 5-13 characters.
-The hard constraint "No hyphens" is SUSPENDED for this session.
+Allowed characters: `[a-z0-9-]` — hyphens required as word separators.
 
 **Prefix pattern:** A short prefix (2-4 chars) + hyphen + descriptive word.
 Common prefixes: go-, re-, un-, pre-, no-, js-, py-, ts-.
 "go-fiber", "re-send", "un-plugin", "no-cache".
-The hard constraint "No hyphens" is SUSPENDED for this session.
+Allowed characters: `[a-z0-9-]` — hyphens required as separators.
 
 **snake_case:** Two words joined by underscore. "red_fox", "ice_pick", "star_fall".
-The hard constraint "alphanumeric only" is SUSPENDED to allow underscores.
+Allowed characters: `[a-z0-9_]` — underscores required as word separators.
 
 **Multiple styles selected:** Generate a proportional mix of the selected styles.
 Roughly equal split across the chosen styles (e.g., if user picks Single word + Compound,
@@ -191,8 +197,11 @@ Apply these constraints strictly:
 ### Hard constraints (reject any name that violates these):
 - Maximum 12 characters
 - Minimum 3 characters
-- Alphanumeric characters only (lowercase). No hyphens, underscores, or special characters.
-  *(This constraint may be suspended by the user's naming style choice in Step 1c.)*
+- **Allowed characters** (determined by the user's Step 1c style selection):
+  - Single word / Compound → `[a-z0-9]` only
+  - Hyphenated / Prefix pattern → `[a-z0-9-]` (hyphens as separators)
+  - snake_case → `[a-z0-9_]` (underscores as separators)
+  - Mixed styles → union of allowed characters for all selected styles
 - No names ending in: -ify, -ly, -hub, -base, -io, -app
 - No names starting with: i (iSomething), e- (eSomething), my (mySomething)
 - **Stem diversity:** No more than 3 names may share the same root word or prefix.
