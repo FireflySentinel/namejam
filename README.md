@@ -25,9 +25,11 @@ AI suggests names that are already taken everywhere. Manually checking npm, PyPI
 ```
 > /namejam
 
-Running namejam v0.4.0
+Running namejam v0.4.1
 
 Reading project context...
+
+[One form, two questions — submit once]
 
 What kind of project is this?
   1. Startup / product
@@ -35,15 +37,13 @@ What kind of project is this?
   3. Dev tool / library
   4. Internal / personal
 
-> 2
+What naming styles do you want? (pick one or more)
+  1. Single word — stripe, notion, vite, grep, cobra
+  2. Compound — airbnb, dropbox, turborepo, topgun
+  3. Hyphenated — left-hook, fast-check, vue-router
+  4. Prefix pattern — go-fiber, re-send, un-plugin
 
-What naming style do you prefer?
-  1. Single word (Recommended) — vite, bun, astro, biome
-  2. Hyphenated — left-hook, fast-check, vue-router
-  3. Compound — turborepo, ripgrep, slidev, unplugin
-  4. Mix of all
-
-> 2
+> project type: 2, styles: 1 + 3
 
 Available names for your project
 
@@ -73,14 +73,13 @@ What would you like to do next?
 ## How it works
 
 1. **Reads your project context** (README, package.json, pyproject.toml, etc.)
-2. **Asks project type** — startup, open source, dev tool, or internal (each has a different naming strategy)
-3. **Asks naming style** — single word, hyphenated, compound, prefix pattern, or mix (options vary by project type)
-4. **Generates 25 candidate names** using compounds, blends, truncations, and meaningful single words — no random syllable inventions
-5. **Checks availability** against npm/PyPI/crates.io (if relevant) and .com domains via DNS
-6. **Filters by project type** — for startups, domain matters; for open source and dev tools, only registry availability counts
-7. **Shows up to 5 available names** + close-but-taken alternatives
-8. **Shortlist favorites** to get 5 variations per name (shorter, longer, respelled, reordered, synonym swap)
-9. **Finals deep-dive** — checks .com, .ai, .io, .dev, .net + GitHub crowding for your top 2-3 finalists
+2. **Asks project type and naming style in one form** — project type (startup / open source / dev tool / internal) shapes the naming strategy; naming style (single word / compound / hyphenated / prefix pattern, multi-select) controls the character rules. Submit once.
+3. **Generates 25 candidate names** using compounds, blends, truncations, and meaningful single words — no random syllable inventions
+4. **Checks availability** against npm/PyPI/crates.io (if relevant) and .com domains via DNS
+5. **Filters by project type** — for startups, domain matters; for open source and dev tools, only registry availability counts
+6. **Shows up to 5 available names** + close-but-taken alternatives
+7. **Shortlist favorites** to get 5 variations per name (shorter, longer, respelled, reordered, synonym swap)
+8. **Finals deep-dive** — checks .com, .ai, .io, .dev, .net + GitHub crowding for your top 2-3 finalists
 
 ## Install
 

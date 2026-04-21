@@ -58,99 +58,52 @@ From these files, extract:
 **If no context files exist** (empty or new directory), ask the user:
 "No project files found. What does your project do? (one sentence)"
 
-### 1b. Ask the user what kind of project this is
+### 1b. Ask project type and naming style (single form)
 
-Even if you read project files, **always ask** using the `AskUserQuestion` tool:
+Even if you read project files, **always ask** using the `AskUserQuestion` tool. Ask BOTH
+questions in a **single call** by passing them together in the `questions` array — the user
+sees one form and submits once. Do NOT split these into two separate `AskUserQuestion` calls.
 
 ```
-question: "What kind of project is this?"
-header: "Project type"
-options:
-  - label: "Startup / product"
-    description: "Brandable identity, .com domain matters, should feel like a company"
-  - label: "Open source project"
-    description: "Dev community appeal, memorable CLI name, fun to say and type"
-  - label: "Dev tool / library"
-    description: "Sharp terminal feel, hints at what it does, package-registry-friendly"
-  - label: "Internal / personal"
-    description: "Short and unique, domain doesn't matter"
-multiSelect: false
+questions:
+  - question: "What kind of project is this?"
+    header: "Project type"
+    multiSelect: false
+    options:
+      - label: "Startup / product"
+        description: "Brandable identity, .com domain matters, should feel like a company"
+      - label: "Open source project"
+        description: "Dev community appeal, memorable CLI name, fun to say and type"
+      - label: "Dev tool / library"
+        description: "Sharp terminal feel, hints at what it does, package-registry-friendly"
+      - label: "Internal / personal"
+        description: "Short and unique, domain doesn't matter"
+  - question: "What naming styles do you want? Pick one or more."
+    header: "Name styles"
+    multiSelect: true
+    options:
+      - label: "Single word"
+        description: "stripe, notion, vite, grep, cobra — clean, brandable, easy to type"
+      - label: "Compound"
+        description: "airbnb, dropbox, turborepo, topgun — two words fused into one"
+      - label: "Hyphenated"
+        description: "left-hook, fast-check, vue-router — two words with a dash"
+      - label: "Prefix pattern"
+        description: "go-fiber, re-send, un-plugin — short prefix signaling ecosystem or function"
 ```
 
-The user can pick one of the four options or type their own description via "Other".
+The user can type their own answer via "Other" on either question — e.g., "snake_case"
+is a valid style for Internal / personal projects (red_fox, ice_pick, star_fall).
 
-**You MUST call `AskUserQuestion` and STOP here.** Do NOT proceed to Step 1c, do NOT
-generate any names, do NOT skip ahead — even if the user's initial message implies a
-preference (e.g., "generate startup names"). The interactive selection is required.
-Wait for the user's explicit response before continuing.
+When multiple styles are selected, generate a proportional mix (roughly equal split
+across the chosen styles).
 
-### 1c. Ask the user about naming style
-
-After the project type is selected, present naming style options **tailored to the project type**.
-The available styles differ per type because some styles are natural for certain contexts
-and awkward for others. Use `AskUserQuestion` with `multiSelect: true` so the user can
-pick one or more styles. When multiple styles are selected, generate a proportional mix.
-
-**If Startup / product:**
-```
-question: "What naming styles do you want? Pick one or more."
-header: "Name styles"
-options:
-  - label: "Single word"
-    description: "stripe, notion, vercel, ramp — clean, brandable, domain-friendly"
-  - label: "Compound"
-    description: "airbnb, dropbox, mailchimp, fivetran — two words fused into one"
-multiSelect: true
-```
-
-**If Open source project:**
-```
-question: "What naming styles do you want? Pick one or more."
-header: "Name styles"
-options:
-  - label: "Single word"
-    description: "vite, bun, astro, biome — clean, memorable, easy to type"
-  - label: "Hyphenated"
-    description: "left-hook, fast-check, vue-router — two words with a dash"
-  - label: "Compound"
-    description: "turborepo, ripgrep, slidev, unplugin — two words fused into one"
-multiSelect: true
-```
-
-**If Dev tool / library:**
-```
-question: "What naming styles do you want? Pick one or more."
-header: "Name styles"
-options:
-  - label: "Single word"
-    description: "grep, curl, ruff, bat, dust — ultra-short, typeable"
-  - label: "Hyphenated"
-    description: "fast-glob, ts-node, dry-run — functional, descriptive"
-  - label: "Compound"
-    description: "ripgrep, watchexec, difftastic — two words fused"
-  - label: "Prefix pattern"
-    description: "go-fiber, re-send, un-plugin — prefix signals ecosystem or function"
-multiSelect: true
-```
-
-**If Internal / personal:**
-```
-question: "What naming styles do you want? Pick one or more."
-header: "Name styles"
-options:
-  - label: "Single word"
-    description: "cobra, phoenix, atlas, onyx — codename feel"
-  - label: "Compound"
-    description: "topgun, redfox, icepick, ironclad — vivid two-word codenames"
-  - label: "snake_case"
-    description: "red_fox, ice_pick, star_fall — internal tool / script style"
-multiSelect: true
-```
-
-**You MUST call `AskUserQuestion` and STOP here.** Do NOT proceed to Step 2, do NOT
-generate any names until the user responds. The style selection directly controls
-which characters are allowed (Step 2 hard constraints) — skipping it produces
-names with wrong character rules.
+**You MUST call `AskUserQuestion` with BOTH questions in a single call, then STOP.** Do
+NOT proceed to Step 2, do NOT generate any names until the user responds. The interactive
+selection is required — even if the user's initial message implies a preference (e.g.,
+"generate startup names"), still collect both answers via the form. The style selection
+directly controls which characters are allowed (Step 2 hard constraints) — skipping it
+produces names with wrong character rules.
 
 ### How each style affects generation:
 
@@ -197,7 +150,7 @@ Apply these constraints strictly:
 ### Hard constraints (reject any name that violates these):
 - Maximum 12 characters
 - Minimum 3 characters
-- **Allowed characters** (determined by the user's Step 1c style selection):
+- **Allowed characters** (determined by the user's Step 1b style selection):
   - Single word / Compound → `[a-z0-9]` only
   - Hyphenated / Prefix pattern → `[a-z0-9-]` (hyphens as separators)
   - snake_case → `[a-z0-9_]` (underscores as separators)
@@ -738,7 +691,7 @@ For each favorited name, generate **5 variations** using these techniques:
 - **Reorder:** Swap the two components (e.g., "mint-name" → "name-mint", "call-it" → "it-call")
 - **Synonym swap:** Replace one component with a synonym (e.g., "mint-name" → "mint-tag", "call-it" → "dub-it")
 
-Maintain the user's chosen naming style (single word, hyphenated, compound, etc.) from Step 1c.
+Maintain the user's chosen naming style (single word, hyphenated, compound, etc.) from Step 1b.
 
 Apply the same origin test: every variant must have a traceable origin.
 
